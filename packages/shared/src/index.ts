@@ -1,12 +1,28 @@
-// Barrel export file for @claude-code-web/shared
-// Re-exports will be added in task 2.4 when type definitions are created
+/**
+ * Barrel export file for @claude-code-web/shared
+ * Public API for shared types, constants, and utilities
+ */
 
-// Types will be exported here
-// export * from './types/session'
-// export * from './types/websocket'
+// ============================================================================
+// Type Exports
+// ============================================================================
 
-// Constants will be exported here
-// export * from './constants/events'
+// Session types - SessionStatus, Session, SessionMetadata, CreateSessionPayload
+export * from './types/session'
 
-// Utilities will be exported here
-// export * from './utils/validation'
+// WebSocket event types - ClientToServerEvent, ServerToClientEvent, and all specific events
+export * from './types/websocket'
+
+// ============================================================================
+// Constants Exports
+// ============================================================================
+
+// Event names, error codes, and configuration constants
+export * from './constants/events'
+
+// ============================================================================
+// Validation Exports
+// ============================================================================
+
+// Zod schemas and validation helper functions
+export * from './utils/validation'

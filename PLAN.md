@@ -211,36 +211,38 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 2.4 Initial Type Definitions
 
-- [ ] **Create WebSocket event type definitions**
+- [x] **Create WebSocket event type definitions** (2025-10-23 19:10)
   - Define base event structure with timestamps
-  - Create client to server event interfaces
-  - Create server to client event interfaces
+  - Create client to server event interfaces (PingEvent, MessageEvent, SessionCreateEvent)
+  - Create server to client event interfaces (PongEvent, MessageResponseEvent, SessionCreatedEvent, ErrorEvent)
   - Define payload types for each event
-  - Include error event types
+  - Include error event types with discriminated unions
 
-- [ ] **Create session type definitions**
-  - Define Session interface
-  - Create SessionStatus enum
+- [x] **Create session type definitions** (2025-10-23 19:10)
+  - Define Session interface with id, status, workingDirectory, timestamps, metadata
+  - Create SessionStatus enum (PENDING, ACTIVE, PAUSED, COMPLETED, FAILED, CANCELLED)
   - Add session lifecycle types
-  - Include metadata types
+  - Include SessionMetadata and CreateSessionPayload types
 
-- [ ] **Create constants file**
-  - Define WebSocket event names
-  - Create error codes
-  - Set up configuration constants
-  - Export type-safe event name mappings
+- [x] **Create constants file** (2025-10-23 19:10)
+  - Define WebSocket event names (WS_EVENTS object)
+  - Create error codes (ERROR_CODES object)
+  - Set up configuration constants (CONFIG object with timeouts and intervals)
+  - Export type-safe event name mappings using const assertions
 
-- [ ] **Create validation schemas**
-  - Build Zod schemas for message validation
-  - Create session creation schemas
-  - Add runtime type checking utilities
-  - Export inferred TypeScript types
+- [x] **Create validation schemas** (2025-10-23 19:10)
+  - Build Zod schemas for all WebSocket event types
+  - Create session creation and validation schemas
+  - Add runtime type checking utilities (validate and safeValidate functions)
+  - Export inferred TypeScript types and discriminated union schemas
 
-- [ ] **Build and verify shared package**
-  - Run build command
-  - Verify output files are generated
-  - Check TypeScript declarations are created
-  - Ensure both module formats are present
+- [x] **Build and verify shared package** (2025-10-23 19:10)
+  - Run build command successfully
+  - Verify output files are generated (index.js, index.d.ts, index.js.map)
+  - Check TypeScript declarations are created (34.69 KB)
+  - ESM format generated successfully
+  - Type checking passes with no errors
+  - ESLint passes with no errors after auto-fix
 
 ---
 
@@ -606,6 +608,8 @@ Once all checkboxes are marked:
 - **Created separate ESLint config package** (2025-10-23 17:41): Instead of keeping all ESLint configuration at the root level, created `@claude-code-web/eslint-config` as a workspace package. This architectural improvement allows all packages (backend, frontend, shared) to import and extend the shared ESLint configuration, promoting consistency and easier maintenance across the monorepo.
 
 - **Used YAML format for Prettier config** (2025-10-23 17:58): Created `.prettierrc.yaml` instead of `.prettierrc` (JSON). YAML format provides better readability and is equally supported by Prettier. Configuration uses no semicolons (semi: false) and avoids arrow parens where possible (arrowParens: avoid) for a cleaner, modern code style.
+
+- **Removed composite mode from shared package tsconfig** (2025-10-23 19:10): Initially configured `composite: true` for TypeScript project references (task 2.2), but removed it during task 2.4 implementation. The composite mode was causing DTS generation errors with tsup's build process. Since tsup handles the build independently (not using tsc project references), composite mode is not needed. The shared package builds successfully without it, generating proper ESM output and TypeScript declarations. This simplification doesn't affect the monorepo's ability to share types between packages.
 
 ### Performance Observations:
 

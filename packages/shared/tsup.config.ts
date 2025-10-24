@@ -7,8 +7,10 @@ export default defineConfig({
   // ESM only - simpler and modern
   format: ['esm'],
 
-  // Generate TypeScript declarations
-  dts: true,
+  // Generate TypeScript declarations with explicit tsconfig
+  dts: {
+    resolve: true,
+  },
 
   // Generate source maps for debugging
   sourcemap: true,
@@ -33,4 +35,7 @@ export default defineConfig({
 
   // Don't bundle dependencies
   external: ['zod'],
+
+  // Explicitly use the local tsconfig
+  tsconfig: './tsconfig.json',
 })
