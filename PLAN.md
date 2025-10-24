@@ -366,24 +366,29 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 4.1 Frontend Package Initialization
 
-- [ ] **Create frontend package with Vite**
-  - Use Vite to scaffold React TypeScript project
-  - Set up packages/frontend directory
+- [x] **Create frontend package with Vite** (2025-10-23 19:27)
+  - Created packages/frontend directory structure (src, public)
+  - Set up Vite configuration with React plugin
+  - Configured port 8080 for dev server
+  - Set up WebSocket proxy to backend (port 3001)
 
-- [ ] **Update frontend package.json**
-  - Set package name with workspace scope
-  - Configure development server port
-  - Add build and preview scripts
-  - Include linting and formatting scripts
-  - Add type checking script
+- [x] **Update frontend package.json** (2025-10-23 19:27)
+  - Set package name with workspace scope (@claude-code-web/frontend)
+  - Configured development server port 8080
+  - Added build, preview, dev scripts
+  - Included linting (lint, lint:fix) and type checking scripts
+  - Added clean script for dist cleanup
 
-- [ ] **Install frontend dependencies**
-  - React and React DOM
-  - Socket.io client for WebSocket
-  - Link to shared package
-  - Development dependencies for types
-  - Vite and its React plugin
-  - Tailwind CSS and PostCSS
+- [x] **Install frontend dependencies** (2025-10-23 19:27)
+  - React 18.3.1 and React DOM 18.3.1
+  - Socket.io client 4.8.1 for WebSocket
+  - Linked to @claude-code-web/shared package (workspace:\*)
+  - Development dependencies: Vite 5.4.11, @vitejs/plugin-react 4.3.3
+  - Type definitions: @types/react, @types/react-dom
+  - Tailwind CSS 3.4.15, PostCSS 8.4.49, Autoprefixer 10.4.20
+  - ESLint 9.38.0 and @claude-code-web/eslint-config (workspace:\*)
+  - TypeScript 5.9.3
+  - All dependencies installed successfully via pnpm
 
 ### 4.2 Vite Configuration
 
@@ -621,6 +626,14 @@ Once all checkboxes are marked:
 - **Used NestJS v11 instead of v10** (2025-10-23 19:24): Plan specified NestJS ^10.x, but used v11.1.7 (latest stable) for all @nestjs/\* packages. NestJS 11 provides better ESM support and is the current stable release. NestJS CLI v11.0.10 and schematics v11.0.9 were also installed. All packages are compatible and working correctly with Node.js 22.21.0.
 
 - **Backend built with ESM throughout** (2025-10-23 19:24): Configured backend package with "type": "module" and TypeScript "module": "ES2022" to maintain consistency with monorepo. Used NestJS CLI with tsc (not tsup) for building. Build outputs proper ESM with import statements and .js extensions. Added experimentalDecorators and emitDecoratorMetadata to tsconfig for NestJS decorator support. All type-checking, linting, and builds pass successfully.
+
+- **Frontend uses port 8080 instead of 3000** (2025-10-23 19:27): Configured Vite dev server to use port 8080 as requested by user, instead of the plan's specified port 3000. Updated vite.config.ts and package.json dev script accordingly.
+
+- **Frontend ESLint ignores config files** (2025-10-23 19:27): Added ESLint ignore pattern for `*.config.ts` and `*.config.js` files in frontend package. These files (vite.config.ts) are managed by tsconfig.node.json (TypeScript project references) and ESLint's type-aware linting doesn't support project references well. Ignoring config files prevents parsing errors while maintaining linting for all source code.
+
+- **Frontend uses src/_ imports instead of @/_ alias** (2025-10-23 19:27): As requested by user, configured TypeScript and Vite to use `src/*` import path pattern instead of `@/*` alias. Updated tsconfig.json paths and vite.config.ts alias configuration accordingly. All imports in source files use the pattern `import X from 'src/Y'`.
+
+- **Fixed non-null assertion in main.tsx** (2025-10-23 19:27): Replaced `document.getElementById('root')!` with proper null check and error throwing to satisfy ESLint rule `@typescript-eslint/no-non-null-assertion` which is set to 'warn' in the shared config. This improves runtime safety.
 
 ### Performance Observations:
 

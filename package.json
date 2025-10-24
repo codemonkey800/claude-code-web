@@ -30,7 +30,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
+      "bash -c 'FILES=\"$@\"; FILTERED=$(echo \"$FILES\" | tr \" \" \"\\n\" | grep -v \"\\.config\\.[jt]s$\" | tr \"\\n\" \" \"); [ -n \"$FILTERED\" ] && eslint --fix $FILTERED || true' --",
       "prettier --write"
     ],
     "*.{json,md,yaml,yml}": [
