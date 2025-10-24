@@ -13,20 +13,19 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@claude-code-web/shared": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "socket.io-client": "^4.8.1",
-    "@claude-code-web/shared": "workspace:*"
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@claude-code-web/eslint-config": "workspace:*",
+    "@tailwindcss/vite": "^4.1.16",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
-    "autoprefixer": "^10.4.20",
     "eslint": "^9.38.0",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^3.4.15",
+    "tailwindcss": "^4.0.0",
     "typescript": "^5.9.3",
     "vite": "^5.4.11"
   }

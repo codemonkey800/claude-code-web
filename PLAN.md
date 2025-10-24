@@ -313,22 +313,25 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 3.4 WebSocket Module Implementation
 
-- [ ] **Create WebSocket module structure**
+- [x] **Create WebSocket module structure** (2025-10-23 19:49)
   - Set up module directory
   - Create gateway and module files
+  - Created AppWebSocketGateway and WebSocketModule
 
-- [ ] **Implement WebSocket module**
+- [x] **Implement WebSocket module** (2025-10-23 19:49)
   - Create module with providers
   - Export gateway for use in other modules
+  - Updated AppModule to import WebSocketModule
 
-- [ ] **Implement WebSocket gateway**
+- [x] **Implement WebSocket gateway (ping/pong only)** (2025-10-23 19:49)
   - Set up Socket.io gateway decorator
-  - Implement connection lifecycle handlers
-  - Add connection tracking
-  - Create message handlers
-  - Implement ping/pong for connection testing
-  - Add session creation handler
+  - Implement connection lifecycle handlers (OnGatewayConnection, OnGatewayDisconnect)
+  - Add connection tracking with Map<string, Socket>
+  - ~~Create message handlers~~ (deferred to next phase)
+  - Implement ping/pong for connection testing ✅
+  - ~~Add session creation handler~~ (deferred to next phase)
   - Include error handling and logging
+  - Note: Only ping/pong implemented for initial validation; message echo and session creation deferred
 
 ### 3.5 Session Module Setup
 
@@ -634,6 +637,8 @@ Once all checkboxes are marked:
 - **Frontend uses src/_ imports instead of @/_ alias** (2025-10-23 19:27): As requested by user, configured TypeScript and Vite to use `src/*` import path pattern instead of `@/*` alias. Updated tsconfig.json paths and vite.config.ts alias configuration accordingly. All imports in source files use the pattern `import X from 'src/Y'`.
 
 - **Fixed non-null assertion in main.tsx** (2025-10-23 19:27): Replaced `document.getElementById('root')!` with proper null check and error throwing to satisfy ESLint rule `@typescript-eslint/no-non-null-assertion` which is set to 'warn' in the shared config. This improves runtime safety.
+
+- **Used Tailwind CSS v4 with new Vite plugin** (2025-10-23 19:49): Implemented Tailwind using the modern `@tailwindcss/vite` plugin approach instead of the PostCSS method specified in the plan. This is the recommended approach per official Tailwind documentation for Vite projects. Key changes: (1) Removed postcss and autoprefixer packages (not needed), (2) Installed @tailwindcss/vite v4.1.16 and tailwindcss v4.0.0, (3) Used single `@import "tailwindcss"` directive instead of separate @tailwind directives, (4) No tailwind.config.ts or postcss.config.js needed initially (can be added later for customization). This approach is simpler, has fewer dependencies, and provides better Vite integration. Build and dev server work correctly with all Tailwind utility classes functioning as expected.
 
 ### Performance Observations:
 
