@@ -111,16 +111,18 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 1.5 Prettier Configuration
 
-- [ ] **Create Prettier configuration**
-  - Set up .prettierrc with formatting rules
-  - Configure semicolons, quotes, and line width
-  - Set trailing comma preferences
-  - Configure bracket spacing and arrow parentheses
+- [x] **Create Prettier configuration** (2025-10-23 17:58)
+  - Set up .prettierrc.yaml with formatting rules
+  - Configure semicolons (semi: false), quotes (singleQuote: true), and line width (default 80)
+  - Set trailing comma preferences (trailingComma: all)
+  - Configure bracket spacing and arrow parentheses (arrowParens: avoid)
+  - Note: Used YAML format instead of JSON for better readability
 
-- [ ] **Create Prettier ignore file**
-  - Exclude build outputs
-  - Exclude lock files
-  - Exclude coverage reports
+- [x] **Create Prettier ignore file** (2025-10-23 17:58)
+  - Exclude build outputs (dist, build, .turbo, .next, .vite, out)
+  - Exclude lock files (pnpm-lock.yaml, package-lock.json, yarn.lock)
+  - Exclude coverage reports (coverage, .nyc_output)
+  - Exclude generated files and cache directories
 
 ### 1.6 Git Hooks Setup
 
@@ -581,6 +583,8 @@ Once all checkboxes are marked:
 ### Deviations from Plan:
 
 - **Created separate ESLint config package** (2025-10-23 17:41): Instead of keeping all ESLint configuration at the root level, created `@claude-code-web/eslint-config` as a workspace package. This architectural improvement allows all packages (backend, frontend, shared) to import and extend the shared ESLint configuration, promoting consistency and easier maintenance across the monorepo.
+
+- **Used YAML format for Prettier config** (2025-10-23 17:58): Created `.prettierrc.yaml` instead of `.prettierrc` (JSON). YAML format provides better readability and is equally supported by Prettier. Configuration uses no semicolons (semi: false) and avoids arrow parens where possible (arrowParens: avoid) for a cleaner, modern code style.
 
 ### Performance Observations:
 
