@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common'
 
+import { WebSocketModule } from './modules/websocket/websocket.module.js'
+
 @Module({
-  imports: [],
+  imports: [WebSocketModule],
   controllers: [],
   providers: [],
 })
