@@ -253,30 +253,34 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 3.1 Backend Package Initialization
 
-- [ ] **Create backend package structure**
+- [x] **Create backend package structure** (2025-10-23 19:24)
   - Set up packages/backend directory
   - Create src folder with module organization
   - Set up folders for modules, common utilities, and config
+  - Created directory structure: modules/{websocket,session}, common/{filters,interceptors,guards}, config, test
 
-- [ ] **Initialize backend package.json**
-  - Set package name with workspace scope
-  - Configure NestJS scripts
+- [x] **Initialize backend package.json** (2025-10-23 19:24)
+  - Set package name with workspace scope (@claude-code-web/backend)
+  - Configure NestJS scripts (start, start:dev, start:debug, build)
   - Add development and production start scripts
   - Include build, test, and lint commands
+  - Configured with type: "module" for ESM support
 
-- [ ] **Install NestJS dependencies**
-  - Core NestJS packages
-  - Platform packages for Express
-  - WebSocket and Socket.io platform packages
-  - Reflection metadata for decorators
-  - RxJS for reactive programming
+- [x] **Install NestJS dependencies** (2025-10-23 19:24)
+  - Core NestJS packages (v11.1.7)
+  - Platform packages for Express (v11.1.7)
+  - WebSocket and Socket.io platform packages (v11.1.7)
+  - Reflection metadata for decorators (v0.2.2)
+  - RxJS for reactive programming (v7.8.2)
+  - Socket.io v4.8.1
   - Link to shared package using workspace protocol
 
-- [ ] **Install backend development dependencies**
-  - NestJS CLI and schematics
-  - Testing packages
-  - TypeScript type definitions
-  - Jest for testing
+- [x] **Install backend development dependencies** (2025-10-23 19:24)
+  - NestJS CLI and schematics (v11.0.10, v11.0.9)
+  - Testing packages (@nestjs/testing v11.1.7)
+  - TypeScript type definitions (@types/node, @types/express, @types/jest)
+  - Jest for testing (v29.7.0)
+  - ts-jest (v29.4.5) and ts-node (v10.9.2)
   - Development server tools
 
 ### 3.2 NestJS Configuration
@@ -613,6 +617,10 @@ Once all checkboxes are marked:
 - **Used YAML format for Prettier config** (2025-10-23 17:58): Created `.prettierrc.yaml` instead of `.prettierrc` (JSON). YAML format provides better readability and is equally supported by Prettier. Configuration uses no semicolons (semi: false) and avoids arrow parens where possible (arrowParens: avoid) for a cleaner, modern code style.
 
 - **Removed composite mode from shared package tsconfig** (2025-10-23 19:10): Initially configured `composite: true` for TypeScript project references (task 2.2), but removed it during task 2.4 implementation. The composite mode was causing DTS generation errors with tsup's build process. Since tsup handles the build independently (not using tsc project references), composite mode is not needed. The shared package builds successfully without it, generating proper ESM output and TypeScript declarations. This simplification doesn't affect the monorepo's ability to share types between packages.
+
+- **Used NestJS v11 instead of v10** (2025-10-23 19:24): Plan specified NestJS ^10.x, but used v11.1.7 (latest stable) for all @nestjs/\* packages. NestJS 11 provides better ESM support and is the current stable release. NestJS CLI v11.0.10 and schematics v11.0.9 were also installed. All packages are compatible and working correctly with Node.js 22.21.0.
+
+- **Backend built with ESM throughout** (2025-10-23 19:24): Configured backend package with "type": "module" and TypeScript "module": "ES2022" to maintain consistency with monorepo. Used NestJS CLI with tsc (not tsup) for building. Build outputs proper ESM with import statements and .js extensions. Added experimentalDecorators and emitDecoratorMetadata to tsconfig for NestJS decorator support. All type-checking, linting, and builds pass successfully.
 
 ### Performance Observations:
 
