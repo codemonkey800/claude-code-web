@@ -7,5 +7,27 @@
     "node": ">=22.21.0",
     "pnpm": ">=8.0.0"
   },
-  "scripts": {}
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.3"
+  }
 }

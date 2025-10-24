@@ -31,20 +31,17 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 1.1 Project Setup
 
 - [x] **Create root directory and initialize git repository**
-
   - Create claude-code-web directory
   - Initialize git
   - Set up initial commit
 
 - [x] **Create comprehensive .gitignore file** (2025-10-23 16:46)
-
   - Include node_modules, dist folders, environment files
   - Add OS-specific files like .DS_Store
   - Include IDE configuration folders
   - Add log files and coverage reports
 
 - [x] **Initialize pnpm package manager** (2025-10-23 16:54)
-
   - Install pnpm globally if not present
   - Initialize root package.json
   - Verify pnpm version is 8.0 or higher
@@ -56,21 +53,22 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 1.2 Root Package Configuration
 
-- [ ] **Set up root package.json with workspace scripts**
-
+- [x] **Set up root package.json with workspace scripts** (2025-10-23 17:08)
   - Define project name and mark as private
   - Set packageManager field for consistency
   - Define Node.js and pnpm engine requirements
   - Create scripts for running commands across workspaces
   - Include dev, build, test, lint, format, and clean commands
+  - Added 9 workspace scripts: dev, build, test, lint, format, format:check, type-check, clean, prepare
 
-- [ ] **Install root-level development dependencies**
+- [x] **Install root-level development dependencies** (2025-10-23 17:08)
   - TypeScript for type checking
   - ESLint for code linting
   - Prettier for code formatting
   - Husky for git hooks
   - Lint-staged for pre-commit checks
   - Turbo for build orchestration
+  - Installed 10 packages: typescript@5.9.3, turbo@2.5.8, prettier@3.6.2, eslint@9.38.0, @typescript-eslint/parser@8.46.2, @typescript-eslint/eslint-plugin@8.46.2, eslint-config-prettier@10.1.8, eslint-plugin-import@2.32.0, husky@9.1.7, lint-staged@16.2.6
 
 ### 1.3 TypeScript Configuration
 
@@ -85,7 +83,6 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 1.4 ESLint Configuration
 
 - [ ] **Set up root ESLint configuration**
-
   - Create .eslintrc.js file
   - Configure TypeScript parser
   - Add necessary plugins for TypeScript and imports
@@ -102,7 +99,6 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 1.5 Prettier Configuration
 
 - [ ] **Create Prettier configuration**
-
   - Set up .prettierrc with formatting rules
   - Configure semicolons, quotes, and line width
   - Set trailing comma preferences
@@ -116,12 +112,10 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 1.6 Git Hooks Setup
 
 - [ ] **Initialize Husky for git hooks**
-
   - Install and configure Husky
   - Create hooks directory
 
 - [ ] **Set up pre-commit hook**
-
   - Configure to run lint-staged
   - Ensure code is linted and formatted before commit
 
@@ -146,13 +140,11 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 2.1 Package Initialization
 
 - [ ] **Create shared package directory structure**
-
   - Create packages/shared folder
   - Set up src directory with subfolders for types, constants, utils
   - Organize code by domain concerns
 
 - [ ] **Initialize shared package.json**
-
   - Set package name with workspace scope
   - Configure entry points for CommonJS and ESM
   - Define TypeScript types location
@@ -184,7 +176,6 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 2.4 Initial Type Definitions
 
 - [ ] **Create WebSocket event type definitions**
-
   - Define base event structure with timestamps
   - Create client to server event interfaces
   - Create server to client event interfaces
@@ -192,28 +183,24 @@ Establish a working monorepo with WebSocket communication between React frontend
   - Include error event types
 
 - [ ] **Create session type definitions**
-
   - Define Session interface
   - Create SessionStatus enum
   - Add session lifecycle types
   - Include metadata types
 
 - [ ] **Create constants file**
-
   - Define WebSocket event names
   - Create error codes
   - Set up configuration constants
   - Export type-safe event name mappings
 
 - [ ] **Create validation schemas**
-
   - Build Zod schemas for message validation
   - Create session creation schemas
   - Add runtime type checking utilities
   - Export inferred TypeScript types
 
 - [ ] **Create barrel exports**
-
   - Set up main index file
   - Export all types, constants, and utilities
   - Organize exports by domain
@@ -231,20 +218,17 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 3.1 Backend Package Initialization
 
 - [ ] **Create backend package structure**
-
   - Set up packages/backend directory
   - Create src folder with module organization
   - Set up folders for modules, common utilities, and config
 
 - [ ] **Initialize backend package.json**
-
   - Set package name with workspace scope
   - Configure NestJS scripts
   - Add development and production start scripts
   - Include build, test, and lint commands
 
 - [ ] **Install NestJS dependencies**
-
   - Core NestJS packages
   - Platform packages for Express
   - WebSocket and Socket.io platform packages
@@ -262,7 +246,6 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 3.2 NestJS Configuration
 
 - [ ] **Create TypeScript configuration for backend**
-
   - Extend base configuration
   - Set up path aliases for imports
   - Configure decorator metadata
@@ -276,7 +259,6 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 3.3 Main Application Setup
 
 - [ ] **Create main.ts entry point**
-
   - Set up NestJS application bootstrap
   - Configure CORS for frontend communication
   - Set port configuration
@@ -292,12 +274,10 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 3.4 WebSocket Module Implementation
 
 - [ ] **Create WebSocket module structure**
-
   - Set up module directory
   - Create gateway and module files
 
 - [ ] **Implement WebSocket module**
-
   - Create module with providers
   - Export gateway for use in other modules
 
@@ -313,12 +293,10 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 3.5 Session Module Setup
 
 - [ ] **Create Session module structure**
-
   - Set up module directory
   - Create service and module files
 
 - [ ] **Implement Session module**
-
   - Create module with providers
   - Export service for use in other modules
 
@@ -333,7 +311,6 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 3.6 Backend Environment Configuration
 
 - [ ] **Create development environment file**
-
   - Set Node environment
   - Configure port
   - Set logging level
@@ -350,12 +327,10 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 4.1 Frontend Package Initialization
 
 - [ ] **Create frontend package with Vite**
-
   - Use Vite to scaffold React TypeScript project
   - Set up packages/frontend directory
 
 - [ ] **Update frontend package.json**
-
   - Set package name with workspace scope
   - Configure development server port
   - Add build and preview scripts
@@ -391,12 +366,10 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 4.4 Tailwind CSS Setup
 
 - [ ] **Initialize Tailwind CSS**
-
   - Run Tailwind init command
   - Create PostCSS configuration
 
 - [ ] **Configure Tailwind**
-
   - Set content paths for purging
   - Configure theme extensions
   - Add custom color palette
@@ -420,13 +393,11 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 4.6 Core UI Components
 
 - [ ] **Create ConnectionStatus component**
-
   - Display current connection state
   - Show visual indicator
   - Update in real-time
 
 - [ ] **Create MessageTester component**
-
   - Build message input interface
   - Implement send functionality
   - Display received messages
@@ -442,7 +413,6 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 4.7 Main App Component
 
 - [ ] **Update App.tsx root component**
-
   - Set up Socket provider
   - Create application layout
   - Add header with connection status
@@ -469,13 +439,11 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 5.2 Build Verification
 
 - [ ] **Build shared package**
-
   - Execute build command
   - Verify distribution files are created
   - Check all module formats are generated
 
 - [ ] **Build backend package**
-
   - Execute build command
   - Verify NestJS compilation
   - Check output directory structure
@@ -488,25 +456,21 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 5.3 End-to-End Testing
 
 - [ ] **Start all development servers**
-
   - Run concurrent dev command
   - Verify all services start without errors
   - Check for port conflicts
 
 - [ ] **Test WebSocket connection**
-
   - Open frontend in browser
   - Verify connection status shows connected
   - Check browser console for connection logs
 
 - [ ] **Test Ping/Pong functionality**
-
   - Click ping test button
   - Verify pong response is received
   - Check console logs on both sides
 
 - [ ] **Test Message Echo**
-
   - Send test message from frontend
   - Verify echo response is received
   - Check backend logs for processing
@@ -519,25 +483,21 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### 5.4 Validation Checklist
 
 - [ ] **Verify monorepo structure**
-
   - All packages properly organized
   - Workspace dependencies resolve correctly
   - Scripts run from root and packages
 
 - [ ] **Verify TypeScript integration**
-
   - No type errors in any package
   - Shared types import correctly
   - Path aliases work properly
 
 - [ ] **Verify WebSocket communication**
-
   - Connection establishes on startup
   - Reconnection works after disconnect
   - All event types function correctly
 
 - [ ] **Verify development experience**
-
   - Hot reload works in frontend
   - Backend restarts on changes
   - Shared package changes propagate
@@ -555,19 +515,16 @@ Establish a working monorepo with WebSocket communication between React frontend
 ### Phase 1 is complete when:
 
 1. ✅ **Architecture Proven**
-
    - Monorepo structure functioning with all packages
    - Shared types successfully used by both frontend and backend
    - Build process works for all packages independently and together
 
 2. ✅ **WebSocket Working**
-
    - Bidirectional communication successfully established
    - Multiple event types handled correctly
    - Connection management with reconnection implemented
 
 3. ✅ **Developer Experience**
-
    - Hot reload and auto-restart functioning
    - TypeScript providing full type safety across packages
    - Linting and formatting properly configured
@@ -584,19 +541,16 @@ Establish a working monorepo with WebSocket communication between React frontend
 Once all checkboxes are marked:
 
 1. **Commit the working foundation**
-
    - Stage all changes
    - Create descriptive commit message
    - Push to repository
 
 2. **Tag the milestone**
-
    - Create annotated git tag
    - Mark as phase1-complete
    - Document completion date
 
 3. **Document any deviations**
-
    - Note changes from original plan
    - Document issues encountered
    - Update dependency versions if needed
