@@ -1,0 +1,11 @@
+{
+  "name": "claude-code-web",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.19.0",
+  "engines": {
+    "node": ">=22.21.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {}
+}
