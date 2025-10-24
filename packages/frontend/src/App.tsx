@@ -1,42 +1,9 @@
+import * as Toast from '@radix-ui/react-toast'
+
+import { ConnectionStatusToast } from 'src/components/ConnectionStatusToast'
 import { SocketProvider } from 'src/context/SocketContext'
-import { useSocket } from 'src/hooks/useSocket'
-import { ConnectionStatus } from 'src/types/socket'
 
 function AppContent() {
-  const { connectionStatus, isConnected, error, reconnectAttempt } = useSocket()
-
-  const getStatusColor = () => {
-    switch (connectionStatus) {
-      case ConnectionStatus.CONNECTED:
-        return 'bg-green-100 border-green-400'
-      case ConnectionStatus.CONNECTING:
-      case ConnectionStatus.RECONNECTING:
-        return 'bg-yellow-100 border-yellow-400'
-      case ConnectionStatus.ERROR:
-      case ConnectionStatus.DISCONNECTED:
-        return 'bg-red-100 border-red-400'
-      default:
-        return 'bg-gray-100 border-gray-400'
-    }
-  }
-
-  const getStatusText = () => {
-    switch (connectionStatus) {
-      case ConnectionStatus.CONNECTED:
-        return '✅ Connected to WebSocket server'
-      case ConnectionStatus.CONNECTING:
-        return '🔄 Connecting to server...'
-      case ConnectionStatus.RECONNECTING:
-        return `🔄 Reconnecting... (Attempt ${reconnectAttempt})`
-      case ConnectionStatus.DISCONNECTED:
-        return '❌ Disconnected from server'
-      case ConnectionStatus.ERROR:
-        return `❌ Connection error: ${error || 'Unknown error'}`
-      default:
-        return 'Unknown status'
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-8">
@@ -47,14 +14,6 @@ function AppContent() {
           <p className="text-lg text-gray-600 mb-6">
             Architecture validation in progress...
           </p>
-
-          {/* Connection Status */}
-          <div className={`p-4 border rounded mb-4 ${getStatusColor()}`}>
-            <p className="font-semibold">{getStatusText()}</p>
-            {isConnected && (
-              <p className="text-sm mt-2">WebSocket connection active</p>
-            )}
-          </div>
 
           {/* Tailwind CSS Verification */}
           <div className="mt-6 p-4 bg-green-100 border border-green-400 rounded">
@@ -70,9 +29,13 @@ function AppContent() {
 
 function App() {
   return (
-    <SocketProvider>
-      <AppContent />
-    </SocketProvider>
+    <Toast.Provider swipeDirection="right">
+      <SocketProvider>
+        <AppContent />
+        <ConnectionStatusToast />
+        <Toast.Viewport className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-96 max-w-full p-4" />
+      </SocketProvider>
+    </Toast.Provider>
   )
 }
 

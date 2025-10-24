@@ -11,7 +11,7 @@ import { ConnectionStatus, type SocketContextState } from 'src/types/socket'
 // Backend WebSocket URL
 const SOCKET_URL: string =
   (import.meta.env.VITE_BACKEND_URL as string | undefined) ||
-  'http://localhost:3001'
+  'http://localhost:8081'
 
 // Create context with default values
 export const SocketContext = createContext<SocketContextState | null>(null)
