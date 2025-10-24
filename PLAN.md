@@ -126,18 +126,20 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 1.6 Git Hooks Setup
 
-- [ ] **Initialize Husky for git hooks**
-  - Install and configure Husky
-  - Create hooks directory
+- [x] **Initialize Husky for git hooks** (2025-10-23 18:05)
+  - Husky already installed in 1.2
+  - .husky directory created automatically
+  - prepare script already configured in package.json
 
-- [ ] **Set up pre-commit hook**
-  - Configure to run lint-staged
-  - Ensure code is linted and formatted before commit
+- [x] **Set up pre-commit hook** (2025-10-23 18:05)
+  - Created .husky/pre-commit hook file
+  - Configured to run lint-staged and type-check
+  - Ensures code is linted, formatted, and type-checked before commit
 
-- [ ] **Configure lint-staged**
-  - Set up rules for TypeScript files
-  - Configure formatting for JSON, Markdown, and YAML
-  - Ensure fixes are applied automatically
+- [x] **Configure lint-staged** (2025-10-23 18:05)
+  - Set up rules for TypeScript/JavaScript files (ESLint + Prettier)
+  - Configure formatting for JSON, Markdown, and YAML (Prettier)
+  - Fixes are applied automatically to staged files
 
 ### 1.7 Turbo Configuration
 
