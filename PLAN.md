@@ -83,19 +83,31 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 1.4 ESLint Configuration
 
-- [ ] **Set up root ESLint configuration**
-  - Create .eslintrc.js file
-  - Configure TypeScript parser
-  - Add necessary plugins for TypeScript and imports
-  - Extend recommended rulesets
-  - Configure import ordering rules
-  - Set up ignore patterns for build outputs
+- [x] **Set up root ESLint configuration** (2025-10-23 17:33)
+  - Created eslint.config.js file (ESLint 9 flat config format)
+  - Configured TypeScript parser (@typescript-eslint/parser)
+  - Added necessary plugins for TypeScript and imports
+  - Extended recommended rulesets (js.configs.recommended, TypeScript recommended + type-checked)
+  - Configured import ordering rules (alphabetical with newlines between groups)
+  - Set up ignore patterns for build outputs (node_modules, dist, .turbo, coverage)
+  - Added "type": "module" to package.json for ES module support
+  - Added lint:root script to package.json
+  - Note: Used eslint.config.js (flat config) instead of .eslintrc.js due to ESLint 9.x default format
 
-- [ ] **Install ESLint and related dependencies**
-  - TypeScript ESLint parser and plugin
-  - Import plugin for managing imports
-  - Prettier plugin for formatting integration
-  - Config packages for rule presets
+- [x] **Install ESLint and related dependencies** (2025-10-23 17:33)
+  - Installed @eslint/js@9.38.0 (for flat config base rules)
+  - Installed globals@16.4.0 (for environment globals)
+  - Previously installed in 1.2: TypeScript ESLint parser@8.46.2 and plugin@8.46.2
+  - Previously installed in 1.2: eslint-plugin-import@2.32.0 for import management
+  - Previously installed in 1.2: eslint-config-prettier@10.1.8 for formatting integration
+
+- [x] **Create shared ESLint config package** (2025-10-23 17:41)
+  - Created @claude-code-web/eslint-config package in packages/eslint-config
+  - Moved all ESLint plugins and configs from root to shared package
+  - Root eslint.config.js now imports from shared package
+  - Allows other packages to import and extend base configuration
+  - Package includes: @eslint/js, TypeScript parser/plugin, import sorting, Prettier integration
+  - Note: Architectural improvement for better config sharing across monorepo packages
 
 ### 1.5 Prettier Configuration
 
@@ -200,11 +212,6 @@ Establish a working monorepo with WebSocket communication between React frontend
   - Create session creation schemas
   - Add runtime type checking utilities
   - Export inferred TypeScript types
-
-- [ ] **Create barrel exports**
-  - Set up main index file
-  - Export all types, constants, and utilities
-  - Organize exports by domain
 
 - [ ] **Build and verify shared package**
   - Run build command
@@ -573,7 +580,7 @@ Once all checkboxes are marked:
 
 ### Deviations from Plan:
 
--
+- **Created separate ESLint config package** (2025-10-23 17:41): Instead of keeping all ESLint configuration at the root level, created `@claude-code-web/eslint-config` as a workspace package. This architectural improvement allows all packages (backend, frontend, shared) to import and extend the shared ESLint configuration, promoting consistency and easier maintenance across the monorepo.
 
 ### Performance Observations:
 
