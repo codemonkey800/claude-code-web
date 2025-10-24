@@ -3,8 +3,8 @@
  * Defines strongly-typed events for bidirectional client-server communication
  */
 
-import type { ErrorCode } from '../constants/events'
 import type { CreateSessionPayload, Session } from './session'
+import type { ErrorCode } from 'src/constants/events'
 
 /**
  * Base structure for all WebSocket events

@@ -1,9 +1,10 @@
-import js from '@eslint/js';
-import tseslint from '@typescript-eslint/eslint-plugin';
-import tsparser from '@typescript-eslint/parser';
-import eslintConfigPrettier from 'eslint-config-prettier';
-import simpleImportSort from 'eslint-plugin-simple-import-sort';
-import globals from 'globals';
+import js from '@eslint/js'
+import tseslint from '@typescript-eslint/eslint-plugin'
+import tsparser from '@typescript-eslint/parser'
+import eslintConfigPrettier from 'eslint-config-prettier'
+import importPlugin from 'eslint-plugin-import'
+import simpleImportSort from 'eslint-plugin-simple-import-sort'
+import globals from 'globals'
 
 export default [
   // Ignore patterns
@@ -51,6 +52,7 @@ export default [
     },
     plugins: {
       '@typescript-eslint': tseslint,
+      import: importPlugin,
       'simple-import-sort': simpleImportSort,
     },
     rules: {
@@ -72,6 +74,9 @@ export default [
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-non-null-assertion': 'warn',
 
+      // Import restrictions
+      'import/no-relative-parent-imports': 'error',
+
       // Import sorting
       'simple-import-sort/imports': [
         'error',
@@ -83,9 +88,7 @@ export default [
             ['^@?\\w'],
             // Internal packages from src
             ['^src/'],
-            // Parent imports
-            ['^\\.\\.'],
-            // Sibling imports
+            // Sibling imports (current directory only)
             ['^\\.'],
             // Type imports
             ['^.+\\u0000$'],
@@ -113,9 +116,13 @@ export default [
       },
     },
     plugins: {
+      import: importPlugin,
       'simple-import-sort': simpleImportSort,
     },
     rules: {
+      // Import restrictions
+      'import/no-relative-parent-imports': 'error',
+
       // Import sorting
       'simple-import-sort/imports': [
         'error',
@@ -127,9 +134,7 @@ export default [
             ['^@?\\w'],
             // Internal packages from src
             ['^src/'],
-            // Parent imports
-            ['^\\.\\.'],
-            // Sibling imports
+            // Sibling imports (current directory only)
             ['^\\.'],
             // Type imports
             ['^.+\\u0000$'],
@@ -147,4 +152,4 @@ export default [
 
   // Prettier config - must be last to override conflicting rules
   eslintConfigPrettier,
-];
+]

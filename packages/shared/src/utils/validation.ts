@@ -5,8 +5,8 @@
 
 import { z } from 'zod'
 
-import { ERROR_CODES, WS_EVENTS } from '../constants/events'
-import { SessionStatus } from '../types/session'
+import { ERROR_CODES, WS_EVENTS } from 'src/constants/events'
+import { SessionStatus } from 'src/types/session'
 
 // ============================================================================
 // Session Validation Schemas
