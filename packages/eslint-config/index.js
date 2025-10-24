@@ -85,13 +85,15 @@ export default [
             // Node.js built-in modules
             ['^node:'],
             // External packages
-            ['^@?\\w'],
-            // Internal packages from src
+            ['^(?!src/)@?\\w'],
+            // Internal packages from src (regular imports)
             ['^src/'],
-            // Sibling imports (current directory only)
+            // Internal packages from src (type imports)
+            ['^src/.*\\u0000$'],
+            // Relative imports (regular imports)
             ['^\\.'],
-            // Type imports
-            ['^.+\\u0000$'],
+            // Relative imports (type imports)
+            ['^\\..*\\u0000$'],
           ],
         },
       ],
@@ -131,13 +133,15 @@ export default [
             // Node.js built-in modules
             ['^node:'],
             // External packages
-            ['^@?\\w'],
-            // Internal packages from src
+            ['^(?!src/)@?\\w'],
+            // Internal packages from src (regular imports)
             ['^src/'],
-            // Sibling imports (current directory only)
+            // Internal packages from src (type imports)
+            ['^src/.*\\u0000$'],
+            // Relative imports (regular imports)
             ['^\\.'],
-            // Type imports
-            ['^.+\\u0000$'],
+            // Relative imports (type imports)
+            ['^\\..*\\u0000$'],
           ],
         },
       ],
