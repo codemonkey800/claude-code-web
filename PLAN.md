@@ -285,27 +285,28 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 3.2 NestJS Configuration
 
-- [ ] **Create TypeScript configuration for backend**
+- [x] **Create TypeScript configuration for backend** (2025-10-23 20:20)
   - Extend base configuration
-  - Set up path aliases for imports
-  - Configure decorator metadata
-  - Enable experimental decorators
+  - Set up path aliases for imports (src/\*)
+  - Configure decorator metadata (experimentalDecorators: true)
+  - Enable experimental decorators (emitDecoratorMetadata: true)
+  - Configured with ES2022 modules and strict settings
 
-- [ ] **Create Nest CLI configuration**
-  - Set up build options
-  - Configure source root
-  - Set TypeScript configuration path
+- [x] **Create Nest CLI configuration** (2025-10-23 20:20)
+  - Set up build options (deleteOutDir: true)
+  - Configure source root (src)
+  - Set TypeScript configuration path (tsconfig.json)
 
 ### 3.3 Main Application Setup
 
-- [ ] **Create main.ts entry point**
+- [x] **Create main.ts entry point** (2025-10-23 20:20)
   - Set up NestJS application bootstrap
-  - Configure CORS for frontend communication
-  - Set port configuration
+  - Configure CORS for frontend communication (origin: http://localhost:5173)
+  - Set port configuration (PORT env var || 3001, will be updated to 8081)
   - Add error handling
   - Include startup logging
 
-- [ ] **Create root application module**
+- [x] **Create root application module** (2025-10-23 20:20)
   - Set up AppModule
   - Import WebSocket module
   - Import Session module
@@ -358,15 +359,23 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 3.6 Backend Environment Configuration
 
-- [ ] **Create development environment file**
-  - Set Node environment
-  - Configure port
-  - Set logging level
+- [x] **Create development environment file** (2025-10-23 20:22)
+  - Set Node environment (NODE_ENV=development)
+  - Configure port (PORT=8081)
+  - Set logging level (LOG_LEVEL=debug)
+  - Set frontend URL (FRONTEND_URL=http://localhost:8080)
+  - Created .env.development with all required variables
 
-- [ ] **Set up environment file management**
-  - Add environment files to gitignore
-  - Create example environment file
-  - Document required environment variables
+- [x] **Set up environment file management** (2025-10-23 20:22)
+  - Environment files already protected by root .gitignore
+  - Created .env.example file as template
+  - Documented all required environment variables with descriptions
+  - Installed @nestjs/config for type-safe configuration
+  - Added class-validator and class-transformer for validation
+  - Created env.validation.ts with validation schema
+  - Updated AppModule to use ConfigModule with validation
+  - Updated main.ts to use ConfigService instead of process.env
+  - All type-checks, linting, and builds pass successfully
 
 ---
 

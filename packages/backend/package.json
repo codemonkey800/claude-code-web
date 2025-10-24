@@ -17,28 +17,31 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@nestjs/core": "^11.1.7",
-    "@nestjs/common": "^11.1.7",
-    "@nestjs/platform-express": "^11.1.7",
-    "@nestjs/websockets": "^11.1.7",
-    "@nestjs/platform-socket.io": "^11.1.7",
     "@claude-code-web/shared": "workspace:*",
+    "@nestjs/common": "^11.1.7",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.7",
+    "@nestjs/platform-express": "^11.1.7",
+    "@nestjs/platform-socket.io": "^11.1.7",
+    "@nestjs/websockets": "^11.1.7",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "@claude-code-web/eslint-config": "workspace:*",
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.5",
     "@nestjs/testing": "^11.1.7",
-    "@types/node": "^22.10.5",
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.5",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "eslint": "^9.38.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
-    "eslint": "^9.38.0",
-    "@claude-code-web/eslint-config": "workspace:*"
+    "typescript": "^5.9.3"
   }
 }
