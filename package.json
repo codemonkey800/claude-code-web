@@ -20,6 +20,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
+    "@claude-code-web/eslint-config": "workspace:*",
     "eslint": "^9.38.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.6",

@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@claude-code-web/eslint-config':
+        specifier: workspace:*
+        version: link:packages/eslint-config
       eslint:
         specifier: ^9.38.0
         version: 9.38.0

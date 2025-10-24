@@ -197,12 +197,17 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 2.3 Build Configuration
 
-- [ ] **Set up tsup build configuration**
-  - Configure entry points
-  - Set output formats for both CommonJS and ESM
-  - Enable TypeScript declarations generation
-  - Configure source maps
-  - Set up clean builds
+- [x] **Set up tsup build configuration** (2025-10-23 18:38)
+  - Created tsup.config.ts with comprehensive build configuration
+  - Configured ESM-only output format (simplified from CJS+ESM)
+  - Enabled TypeScript declarations generation (dts: true)
+  - Configured source maps for debugging (sourcemap: true)
+  - Set up clean builds (clean: true)
+  - Simplified package.json scripts: build and dev
+  - Updated package.json to remove CJS-specific fields (main, require)
+  - Fixed tsconfig.json to include \*.config.ts files and removed rootDir restriction
+  - Output: 3 files (index.js, index.d.ts, index.js.map) instead of 6
+  - All linting and type-checking passes
 
 ### 2.4 Initial Type Definitions
 
