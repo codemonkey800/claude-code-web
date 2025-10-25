@@ -7,9 +7,12 @@
     "dev": "vite --port 8080",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit",
+    "test": "echo 'No tests configured yet' && exit 0",
+    "test:watch": "echo 'No tests configured yet'",
+    "test:cov": "echo 'No tests configured yet'",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "dependencies": {

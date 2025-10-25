@@ -25,6 +25,12 @@
       "outputs": [],
       "cache": true
     },
+    "lint:fix": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "eslint.config.js", "package.json"],
+      "outputs": [],
+      "cache": false
+    },
     "type-check": {
       "dependsOn": ["^build"],
       "inputs": ["src/**", "tsconfig.json", "tsconfig.*.json", "package.json"],

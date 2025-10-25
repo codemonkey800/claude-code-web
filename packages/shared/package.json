@@ -13,12 +13,15 @@
     }
   },
   "scripts": {
-    "build": "tsup",
     "dev": "tsup --watch",
-    "clean": "rm -rf dist",
-    "type-check": "tsc --noEmit",
+    "build": "tsup",
+    "test": "echo 'No tests configured yet' && exit 0",
+    "test:watch": "echo 'No tests configured yet'",
+    "test:cov": "echo 'No tests configured yet'",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "zod": "^3.23.8"
