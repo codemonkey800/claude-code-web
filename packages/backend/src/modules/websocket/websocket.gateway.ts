@@ -1,4 +1,6 @@
 import {
+  type MessageEvent,
+  type MessageResponseEvent,
   type PingEvent,
   type PongEvent,
   WS_EVENTS,
@@ -68,5 +70,27 @@ export class AppWebSocketGateway
 
     client.emit(WS_EVENTS.PONG, pongEvent)
     this.logger.debug(`Sent pong to client: ${client.id}`)
+  }
+
+  /**
+   * Handle message events from clients
+   * Echoes the message back with echo flag set to true
+   */
+  @SubscribeMessage(WS_EVENTS.MESSAGE)
+  handleMessage(client: Socket, data: MessageEvent): void {
+    this.logger.debug(`Received message from client: ${client.id}`)
+
+    const response: MessageResponseEvent = {
+      type: WS_EVENTS.MESSAGE,
+      timestamp: new Date().toISOString(),
+      id: data.id,
+      payload: {
+        content: data.payload.content,
+        echo: true,
+      },
+    }
+
+    client.emit(WS_EVENTS.MESSAGE, response)
+    this.logger.debug(`Sent echo response to client: ${client.id}`)
   }
 }

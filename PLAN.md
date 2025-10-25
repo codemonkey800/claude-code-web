@@ -334,6 +334,15 @@ Establish a working monorepo with WebSocket communication between React frontend
   - Include error handling and logging
   - Note: Only ping/pong implemented for initial validation; message echo and session creation deferred
 
+- [x] **Add message echo handler to WebSocket gateway** (2025-10-24 20:30)
+  - Imported MessageEvent and MessageResponseEvent types from shared package
+  - Implemented handleMessage method with @SubscribeMessage(WS_EVENTS.MESSAGE) decorator
+  - Echoes received message content back to client with echo: true flag
+  - Preserves correlation ID for request-response tracking
+  - Added debug logging for observability
+  - Follows the same pattern as handlePing for consistency
+  - Verified: type-check ✅, lint ✅, build ✅
+
 ### 3.5 Session Module Setup
 
 - [x] **Create Session module structure** (2025-10-23 20:15)
@@ -666,9 +675,9 @@ Once all checkboxes are marked:
 - **Used Tailwind CSS v4 with new Vite plugin** (2025-10-23 19:49): Implemented Tailwind using the modern `@tailwindcss/vite` plugin approach instead of the PostCSS method specified in the plan. This is the recommended approach per official Tailwind documentation for Vite projects. Key changes: (1) Removed postcss and autoprefixer packages (not needed), (2) Installed @tailwindcss/vite v4.1.16 and tailwindcss v4.0.0, (3) Used single `@import "tailwindcss"` directive instead of separate @tailwind directives, (4) No tailwind.config.ts or postcss.config.js needed initially (can be added later for customization). This approach is simpler, has fewer dependencies, and provides better Vite integration. Build and dev server work correctly with all Tailwind utility classes functioning as expected.
 
 - **Implemented WebSocket gateway with ping/pong only** (2025-10-23 19:49): For initial validation of the WebSocket infrastructure, implemented only the ping/pong handler in section 3.4. Deferred the following handlers for next implementation phase:
-  - Message echo handler (handleMessage) - will respond to MessageEvent with MessageResponseEvent
-  - Session creation handler (handleSessionCreate) - requires Session module implementation first
-  - This incremental approach allows us to validate the WebSocket layer works before adding complexity. Next steps: (1) Complete Session module (section 3.5), (2) Add message echo handler to WebSocketGateway, (3) Add session creation handler that integrates with SessionService. All type definitions and validation schemas for these handlers already exist in @claude-code-web/shared package.
+  - ~~Message echo handler (handleMessage)~~ - ✅ **COMPLETED (2025-10-24 20:30)** - Now responds to MessageEvent with MessageResponseEvent
+  - Session creation handler (handleSessionCreate) - requires Session module implementation first (Session module completed 2025-10-23 20:15)
+  - This incremental approach allows us to validate the WebSocket layer works before adding complexity. Next step: Add session creation handler that integrates with SessionService. All type definitions and validation schemas for these handlers already exist in @claude-code-web/shared package.
 
 ### Performance Observations:
 
