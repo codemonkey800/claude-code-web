@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "nest start --watch",
+    "dev:debug": "nest start --debug --watch",
     "start": "node dist/main.js",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
     "build": "nest build",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",

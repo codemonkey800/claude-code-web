@@ -10,6 +10,9 @@
   },
   "scripts": {
     "dev": "turbo run dev",
+    "dev:debug": "turbo run dev:debug",
+    "frontend": "turbo run --filter=@claude-code-web/frontend",
+    "backend": "turbo run --filter=@claude-code-web/backend",
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
@@ -17,6 +20,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
     "type-check": "turbo run type-check",
+    "check": "turbo run lint type-check test",
+    "check:quick": "turbo run lint type-check",
     "clean": "turbo run clean && rm -rf node_modules .turbo",
     "prepare": "husky"
   },
