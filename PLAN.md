@@ -409,12 +409,13 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 4.2 Vite Configuration
 
-- [ ] **Create Vite configuration file**
-  - Configure React plugin
-  - Set up path aliases
-  - Configure development server
-  - Set up proxy for WebSocket connections
-  - Configure build options
+- [x] **Create Vite configuration file** (2025-10-24 12:30)
+  - Configure React plugin (react() plugin added)
+  - Set up path aliases (src/\* configured)
+  - Configure development server (port 8080)
+  - Set up proxy for WebSocket connections (/socket.io -> `http://localhost:8081` with ws: true)
+  - Configure build options (outDir: dist, sourcemap: true)
+  - Note: Tailwind CSS Vite plugin also included
 
 ### 4.3 TypeScript Configuration for Frontend
 
