@@ -1,3 +1,3 @@
-import config from '@claude-code-web/eslint-config';
+import config from '@claude-code-web/eslint-config'
 
-export default config;
+export default config
