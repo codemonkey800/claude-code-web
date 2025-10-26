@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 
-import { SessionModule } from '../session/session.module'
+import { SessionModule } from 'src/modules/session/session.module'
+
 import { AppWebSocketGateway } from './websocket.gateway'
 
 /**

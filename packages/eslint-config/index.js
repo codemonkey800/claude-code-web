@@ -6,6 +6,8 @@ import importPlugin from 'eslint-plugin-import'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import globals from 'globals'
 
+import noParentImports from './rules/no-parent-imports.js'
+
 export default [
   // Ignore patterns
   {
@@ -54,6 +56,11 @@ export default [
       '@typescript-eslint': tseslint,
       import: importPlugin,
       'simple-import-sort': simpleImportSort,
+      custom: {
+        rules: {
+          'no-parent-imports': noParentImports,
+        },
+      },
     },
     rules: {
       // TypeScript recommended rules
@@ -74,8 +81,8 @@ export default [
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-non-null-assertion': 'warn',
 
-      // Import restrictions
-      'import/no-relative-parent-imports': 'error',
+      // Import restrictions - use custom rule instead of import/no-relative-parent-imports
+      'custom/no-parent-imports': 'error',
 
       // Import sorting
       'simple-import-sort/imports': [
@@ -120,10 +127,15 @@ export default [
     plugins: {
       import: importPlugin,
       'simple-import-sort': simpleImportSort,
+      custom: {
+        rules: {
+          'no-parent-imports': noParentImports,
+        },
+      },
     },
     rules: {
-      // Import restrictions
-      'import/no-relative-parent-imports': 'error',
+      // Import restrictions - use custom rule instead of import/no-relative-parent-imports
+      'custom/no-parent-imports': 'error',
 
       // Import sorting
       'simple-import-sort/imports': [

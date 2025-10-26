@@ -27,7 +27,7 @@ import {
 } from '@nestjs/websockets'
 import type { Server, Socket } from 'socket.io'
 
-import { SessionService } from '../session/session.service'
+import { SessionService } from 'src/modules/session/session.service'
 
 /**
  * WebSocket Gateway for handling real-time bidirectional communication
