@@ -474,17 +474,32 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 4.6 Core UI Components
 
-- [ ] **Create ConnectionStatus component**
-  - Display current connection state
-  - Show visual indicator
-  - Update in real-time
+- [x] **Create ConnectionStatus component** (2025-10-25 12:40)
+  - Implemented as ConnectionStatusToast component (created 2025-10-23 20:12)
+  - Displays current connection state with toast notifications
+  - Shows visual indicator with color-coded status (green/yellow/red)
+  - Updates in real-time using useSocket hook
+  - Uses Radix UI Toast for non-intrusive notifications
 
-- [ ] **Create MessageTester component**
-  - Build message input interface
-  - Implement send functionality
-  - Display received messages
-  - Add ping/pong test button
-  - Show loading states
+- [x] **Create MessageTester component** (2025-10-25 12:40)
+  - Built comprehensive message testing interface with two sections:
+    1. **Ping/Pong Tester:**
+       - Send ping button with loading state
+       - Displays last pong response with round-trip time
+       - Shows sent/received timestamps with millisecond precision
+       - Uses Zap icon from lucide-react
+    2. **Message Echo Tester:**
+       - Message input with Enter key support
+       - Send button with loading state
+       - Message history display with sent/received differentiation
+       - Clear history functionality with Trash2 icon
+       - Empty state with MessageCircle icon
+       - Scrollable history (max-height: 384px)
+  - Implemented proper state management for pending operations
+  - Uses useSocketEvent hook for type-safe event handling
+  - Integrates shared types (MessageEvent, MessageResponseEvent, PingEvent, PongEvent)
+  - Responsive design with Tailwind CSS
+  - File: [packages/frontend/src/components/MessageTester.tsx](packages/frontend/src/components/MessageTester.tsx)
 
 - [ ] **Create SessionTester component**
   - Add create session button
@@ -494,18 +509,24 @@ Establish a working monorepo with WebSocket communication between React frontend
 
 ### 4.7 Main App Component
 
-- [ ] **Update App.tsx root component**
-  - Set up Socket provider
-  - Create application layout
-  - Add header with connection status
-  - Include test components
-  - Add architecture validation checklist
+- [x] **Update App.tsx root component** (2025-10-25 12:40)
+  - ✅ Socket provider setup with SocketProvider wrapper
+  - ✅ Created clean application layout with gradient background (blue-50 to indigo-100)
+  - ✅ Added header with connection status via ConnectionStatusToast
+  - ✅ Integrated MessageTester component for WebSocket testing
+  - ✅ Set up Radix UI Toast.Provider with Toast.Viewport
+  - ✅ Simplified UI to focus on "WebSocket Communication Testing Interface"
+  - ❌ Architecture validation checklist not added (deferred - not needed for testing interface)
+  - Note: App split into AppContent and App components for clean separation of concerns
+  - File: [packages/frontend/src/App.tsx](packages/frontend/src/App.tsx)
 
-- [ ] **Update main.tsx entry point**
-  - Set up React root
-  - Import global styles
-  - Render App component
-  - Enable strict mode
+- [x] **Update main.tsx entry point** (2025-10-23 19:49)
+  - ✅ React root setup using ReactDOM.createRoot
+  - ✅ Global styles imported (src/index.css with Tailwind)
+  - ✅ App component rendered
+  - ✅ React.StrictMode enabled for development warnings
+  - ✅ Proper null check for root element (no non-null assertions)
+  - File: [packages/frontend/src/main.tsx](packages/frontend/src/main.tsx)
 
 ---
 
@@ -678,6 +699,10 @@ Once all checkboxes are marked:
   - ~~Message echo handler (handleMessage)~~ - ✅ **COMPLETED (2025-10-24 20:30)** - Now responds to MessageEvent with MessageResponseEvent
   - Session creation handler (handleSessionCreate) - requires Session module implementation first (Session module completed 2025-10-23 20:15)
   - This incremental approach allows us to validate the WebSocket layer works before adding complexity. Next step: Add session creation handler that integrates with SessionService. All type definitions and validation schemas for these handlers already exist in @claude-code-web/shared package.
+
+### Implementation Details
+
+- **MessageTester Component Implementation** (2025-10-25 12:40): Created comprehensive WebSocket testing interface combining ping/pong and message echo functionality in a single component. Uses lucide-react icons (Zap, MessageCircle, Send, Trash2) for visual elements and Radix UI Toast for notifications (both already installed). Component demonstrates proper use of shared types from @claude-code-web/shared package and implements best practices for WebSocket event handling with the useSocketEvent hook. Features include round-trip time measurement for pings, message history with sent/received differentiation, and proper pending state management. The implementation serves as both a testing tool and a reference for how to build WebSocket-based features in the application.
 
 ### Performance Observations:
 
