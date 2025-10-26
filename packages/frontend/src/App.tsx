@@ -1,7 +1,11 @@
 import * as Toast from '@radix-ui/react-toast'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
+import { queryClient } from 'src/api/queryClient'
 import { ConnectionStatusToast } from 'src/components/ConnectionStatusToast'
 import { MessageTester } from 'src/components/MessageTester'
+import { SessionTester } from 'src/components/SessionTester'
 import { SocketProvider } from 'src/context/SocketContext'
 
 function AppContent() {
@@ -17,7 +21,10 @@ function AppContent() {
           </p>
         </div>
 
-        <MessageTester />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <MessageTester />
+          <SessionTester />
+        </div>
       </div>
     </div>
   )
@@ -26,11 +33,14 @@ function AppContent() {
 function App() {
   return (
     <Toast.Provider swipeDirection="right">
-      <SocketProvider>
-        <AppContent />
-        <ConnectionStatusToast />
-        <Toast.Viewport className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-96 max-w-full p-4" />
-      </SocketProvider>
+      <QueryClientProvider client={queryClient}>
+        <SocketProvider>
+          <AppContent />
+          <ConnectionStatusToast />
+          <Toast.Viewport className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-96 max-w-full p-4" />
+        </SocketProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
     </Toast.Provider>
   )
 }

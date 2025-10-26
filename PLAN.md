@@ -501,11 +501,17 @@ Establish a working monorepo with WebSocket communication between React frontend
   - Responsive design with Tailwind CSS
   - File: [packages/frontend/src/components/MessageTester.tsx](packages/frontend/src/components/MessageTester.tsx)
 
-- [ ] **Create SessionTester component**
-  - Add create session button
-  - Display created sessions
-  - Show session IDs and status
-  - Handle loading states
+- [x] **Create SessionTester component** (2025-10-26 09:58)
+  - Add create session button ✅
+  - Display created sessions ✅
+  - Show session IDs and status ✅
+  - Handle loading states ✅
+  - Integrated REST API calls via fetch
+  - Added proxy configuration in Vite (/api → backend)
+  - Color-coded status badges (PENDING=yellow, ACTIVE=green, etc.)
+  - Responsive design matching MessageTester
+  - Fetches all sessions on mount with refresh button
+  - File: [packages/frontend/src/components/SessionTester.tsx](packages/frontend/src/components/SessionTester.tsx)
 
 ### 4.7 Main App Component
 
@@ -710,6 +716,120 @@ Once all checkboxes are marked:
 
 ### Suggestions for Phase 2:
 
-- ***
+- Consider implementing real-time session updates via WebSocket instead of polling
+- Add session detail view with more comprehensive information
+- Implement session status transitions (e.g., ACTIVE → PAUSED → COMPLETED)
 
-  **REMEMBER**: Update each checkbox with completion timestamp when done. This document is the single source of truth for Phase 1 progress. Each task should be completed in order unless dependencies allow parallel work.
+---
+
+## 📦 Task Section 6: React Query Integration
+
+### 6.1 React Query Setup
+
+- [x] **Install React Query dependencies** (2025-10-26 10:15)
+  - Installed @tanstack/react-query v5.90.5
+  - Installed @tanstack/react-query-devtools v5.90.2
+  - Installed @lukemorales/query-key-factory v1.3.4
+
+- [x] **Create QueryClient configuration** (2025-10-26 10:15)
+  - Created src/api/queryClient.ts with comprehensive configuration
+  - Configured default staleTime: 30 seconds
+  - Configured gcTime: 5 minutes for cache retention
+  - Enabled automatic refetching on window focus and reconnect
+  - Configured exponential backoff retry strategy (3 retries for queries, 1 for mutations)
+
+- [x] **Set up QueryClientProvider in App.tsx** (2025-10-26 10:15)
+  - Wrapped application with QueryClientProvider
+  - Added ReactQueryDevtools component for development
+  - Provider hierarchy: Toast.Provider > QueryClientProvider > SocketProvider > AppContent
+  - DevTools positioned with initialIsOpen={false}
+
+### 6.2 API Layer Organization
+
+- [x] **Create API service functions** (2025-10-26 10:15)
+  - Created src/api/sessions.ts with fetchSessions and createSession functions
+  - Properly typed with shared types from @claude-code-web/shared
+  - Includes error handling with descriptive messages
+  - Functions return typed Promises (Promise<Session[]> and Promise<Session>)
+
+- [x] **Create query key factory** (2025-10-26 10:15)
+  - Created src/api/queryKeys.ts using @lukemorales/query-key-factory
+  - Used createQueryKeys('sessions', ...) pattern for type-safe keys
+  - Defined sessionsKeys with list query (queryKey + queryFn)
+  - Exported merged queries object for centralized key management
+  - Easy to extend with more entities (todos, users, etc.) in the future
+
+### 6.3 Custom Hooks
+
+- [x] **Create useSessions hook** (2025-10-26 10:15)
+  - Created src/hooks/useSessions.ts with useSessions() hook
+  - Uses useQuery with queries.sessions.list from query-key-factory
+  - Returns data, isLoading, error, and refetch
+  - Automatic caching and background refetching enabled
+
+- [x] **Create useCreateSession hook** (2025-10-26 10:15)
+  - Implemented useCreateSession() hook using useMutation
+  - Automatic cache invalidation on success
+  - Invalidates queries.sessions.list.queryKey to trigger refetch
+  - Returns mutate, mutateAsync, isPending, and error
+
+### 6.4 Component Refactoring
+
+- [x] **Refactor SessionTester component** (2025-10-26 10:15)
+  - Removed manual state management (useState for sessions, isLoading, isCreating, error)
+  - Removed fetchSessions function and useEffect for initial fetch
+  - Removed handleCreateSession async function
+  - Replaced with useSessions() and useCreateSession() hooks
+  - Maintained all existing UI/UX (loading states, error display, connection status check)
+  - Refresh button now calls refetch() from React Query
+  - Create button calls createSession({}) mutation
+  - All functionality preserved with significantly less code
+
+### 6.5 Benefits Achieved
+
+**Code Reduction:**
+
+- Removed ~60 lines of boilerplate state management code
+- Simplified component logic by ~40%
+
+**Features Gained:**
+
+- Automatic caching (sessions cached for 30 seconds)
+- Background refetching on window focus
+- Automatic refetch on network reconnect
+- Optimistic updates support (not yet implemented)
+- Better error handling with retry logic
+- React Query DevTools for debugging
+- Type-safe query keys with IntelliSense
+
+**Developer Experience:**
+
+- Cleaner component code focused on UI logic
+- Easier to test (hooks can be mocked)
+- Better separation of concerns (API layer, hooks, components)
+- Extensible pattern for adding more queries/mutations
+
+### 6.6 Files Modified/Created
+
+**Created:**
+
+- src/api/queryClient.ts - QueryClient configuration
+- src/api/sessions.ts - API service functions
+- src/api/queryKeys.ts - Query key factory with @lukemorales/query-key-factory
+- src/hooks/useSessions.ts - Custom React Query hooks
+
+**Modified:**
+
+- package.json - Added React Query dependencies
+- src/App.tsx - Added QueryClientProvider and DevTools
+- src/components/SessionTester.tsx - Refactored to use hooks
+
+**Unchanged:**
+
+- All WebSocket-related code (SocketContext, useSocket, useSocketEvent, MessageTester)
+- Connection status components
+- Backend and shared packages
+
+---
+
+**REMEMBER**: Update each checkbox with completion timestamp when done. This document is the single source of truth for Phase 1 progress. Each task should be completed in order unless dependencies allow parallel work.
