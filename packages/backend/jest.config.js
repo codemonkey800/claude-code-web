@@ -18,7 +18,8 @@ export default {
   },
   moduleNameMapper: {
     '^@claude-code-web/shared$': '<rootDir>/../shared/src/index.ts',
-    '^src/(.*)$': '<rootDir>/../shared/src/$1',
+    '^src/(constants|types|utils)/(.*)$': '<rootDir>/../shared/src/$1/$2',
+    '^src/(.*)$': '<rootDir>/src/$1',
   },
   collectCoverageFrom: [
     'src/**/*.ts',

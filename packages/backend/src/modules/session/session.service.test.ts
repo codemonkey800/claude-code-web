@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { SessionStatus } from '@claude-code-web/shared'
 import { Test, TestingModule } from '@nestjs/testing'
 
-import { SessionService } from 'src/modules/session/session.service'
+import { SessionService } from './session.service'
 
 // Mock the crypto module
 jest.mock('node:crypto', () => ({

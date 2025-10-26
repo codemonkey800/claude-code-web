@@ -8,7 +8,8 @@ import { Test, TestingModule } from '@nestjs/testing'
 import type { Server, Socket } from 'socket.io'
 
 import { SessionService } from 'src/modules/session/session.service'
-import { AppWebSocketGateway } from 'src/modules/websocket/websocket.gateway'
+
+import { AppWebSocketGateway } from './websocket.gateway'
 
 /**
  * Mock Socket.io socket for testing

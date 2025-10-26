@@ -8,8 +8,8 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Test, TestingModule } from '@nestjs/testing'
 
-import { SessionController } from 'src/modules/session/session.controller'
-import { SessionService } from 'src/modules/session/session.service'
+import { SessionController } from './session.controller'
+import { SessionService } from './session.service'
 
 /**
  * Serialized session with ISO string dates (as returned by REST API)

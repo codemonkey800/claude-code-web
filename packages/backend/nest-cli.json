@@ -6,6 +6,9 @@
     "deleteOutDir": true,
     "tsConfigPath": "tsconfig.json",
     "webpack": false,
-    "builder": "swc"
-  }
+    "builder": "swc",
+    "assets": [],
+    "watchAssets": false
+  },
+  "excludeExts": [".test.ts", ".spec.ts"]
 }
