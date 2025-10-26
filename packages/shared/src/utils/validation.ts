@@ -85,14 +85,51 @@ export const messageEventSchema = z
   .strict()
 
 /**
- * Validates session creation events
+ * Validates session join events
  */
-export const sessionCreateEventSchema = z
+export const sessionJoinEventSchema = z
   .object({
-    type: z.literal(WS_EVENTS.SESSION_CREATE),
+    type: z.literal(WS_EVENTS.SESSION_JOIN),
     timestamp: z.string().datetime(),
     id: z.string().optional(),
-    payload: createSessionPayloadSchema,
+    payload: z
+      .object({
+        sessionId: z.string().uuid(),
+      })
+      .strict(),
+  })
+  .strict()
+
+/**
+ * Validates session leave events
+ */
+export const sessionLeaveEventSchema = z
+  .object({
+    type: z.literal(WS_EVENTS.SESSION_LEAVE),
+    timestamp: z.string().datetime(),
+    id: z.string().optional(),
+    payload: z
+      .object({
+        sessionId: z.string().uuid(),
+      })
+      .strict(),
+  })
+  .strict()
+
+/**
+ * Validates session message events
+ */
+export const sessionMessageEventSchema = z
+  .object({
+    type: z.literal(WS_EVENTS.SESSION_MESSAGE),
+    timestamp: z.string().datetime(),
+    id: z.string().optional(),
+    payload: z
+      .object({
+        sessionId: z.string().uuid(),
+        content: z.string().min(1),
+      })
+      .strict(),
   })
   .strict()
 
@@ -102,7 +139,9 @@ export const sessionCreateEventSchema = z
 export const clientToServerEventSchema = z.discriminatedUnion('type', [
   pingEventSchema,
   messageEventSchema,
-  sessionCreateEventSchema,
+  sessionJoinEventSchema,
+  sessionLeaveEventSchema,
+  sessionMessageEventSchema,
 ])
 
 // ============================================================================
@@ -138,15 +177,84 @@ export const messageResponseEventSchema = z
   .strict()
 
 /**
- * Validates session created events
+ * Validates session joined events
  */
-export const sessionCreatedEventSchema = z
+export const sessionJoinedEventSchema = z
   .object({
-    type: z.literal(WS_EVENTS.SESSION_CREATED),
+    type: z.literal(WS_EVENTS.SESSION_JOINED),
     timestamp: z.string().datetime(),
     id: z.string().optional(),
     payload: z
       .object({
+        sessionId: z.string().uuid(),
+        session: sessionSchema,
+      })
+      .strict(),
+  })
+  .strict()
+
+/**
+ * Validates session left events
+ */
+export const sessionLeftEventSchema = z
+  .object({
+    type: z.literal(WS_EVENTS.SESSION_LEFT),
+    timestamp: z.string().datetime(),
+    id: z.string().optional(),
+    payload: z
+      .object({
+        sessionId: z.string().uuid(),
+      })
+      .strict(),
+  })
+  .strict()
+
+/**
+ * Validates session message response events
+ */
+export const sessionMessageResponseEventSchema = z
+  .object({
+    type: z.literal(WS_EVENTS.SESSION_MESSAGE),
+    timestamp: z.string().datetime(),
+    id: z.string().optional(),
+    payload: z
+      .object({
+        sessionId: z.string().uuid(),
+        content: z.string(),
+        senderId: z.string(),
+      })
+      .strict(),
+  })
+  .strict()
+
+/**
+ * Validates session deleted events
+ */
+export const sessionDeletedEventSchema = z
+  .object({
+    type: z.literal(WS_EVENTS.SESSION_DELETED),
+    timestamp: z.string().datetime(),
+    id: z.string().optional(),
+    payload: z
+      .object({
+        sessionId: z.string().uuid(),
+        reason: z.string().optional(),
+      })
+      .strict(),
+  })
+  .strict()
+
+/**
+ * Validates session status update events
+ */
+export const sessionStatusUpdateEventSchema = z
+  .object({
+    type: z.literal(WS_EVENTS.SESSION_STATUS),
+    timestamp: z.string().datetime(),
+    id: z.string().optional(),
+    payload: z
+      .object({
+        sessionId: z.string().uuid(),
         session: sessionSchema,
       })
       .strict(),
@@ -183,7 +291,11 @@ export const errorEventSchema = z
 export const serverToClientEventSchema = z.discriminatedUnion('type', [
   pongEventSchema,
   messageResponseEventSchema,
-  sessionCreatedEventSchema,
+  sessionJoinedEventSchema,
+  sessionLeftEventSchema,
+  sessionMessageResponseEventSchema,
+  sessionDeletedEventSchema,
+  sessionStatusUpdateEventSchema,
   errorEventSchema,
 ])
 

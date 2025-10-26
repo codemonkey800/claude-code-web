@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 
-import { AppModule } from './app.module.js'
+import { AppModule } from './app.module'
 
 import 'reflect-metadata'
 
@@ -25,4 +25,7 @@ async function bootstrap() {
   console.log(`🔗 CORS enabled for: ${frontendUrl}`)
 }
 
-void bootstrap()
+bootstrap().catch(error => {
+  console.error('❌ Failed to start application:', error)
+  process.exit(1)
+})

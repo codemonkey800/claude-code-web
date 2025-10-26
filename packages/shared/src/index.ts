@@ -26,3 +26,13 @@ export * from './constants/events'
 
 // Zod schemas and validation helper functions
 export * from './utils/validation'
+
+// Error handling utilities
+export * from './utils/error'
+
+// ============================================================================
+// Contract Exports
+// ============================================================================
+
+// REST API contracts using ts-rest
+export * from './contracts/sessions.contract'

@@ -1,25 +1,24 @@
 export default {
-  preset: 'ts-jest/presets/default-esm',
+  preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/src', '<rootDir>/test'],
+  roots: ['<rootDir>/src', '<rootDir>/test', '<rootDir>/../shared/src'],
   testMatch: ['**/*.spec.ts', '**/*.test.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
   transform: {
     '^.+\\.ts$': [
       'ts-jest',
       {
-        useESM: true,
         tsconfig: {
           experimentalDecorators: true,
           emitDecoratorMetadata: true,
-          module: 'ES2022',
+          module: 'ESNext',
         },
       },
     ],
   },
   moduleNameMapper: {
-    '^src/(.*)$': '<rootDir>/src/$1',
     '^@claude-code-web/shared$': '<rootDir>/../shared/src/index.ts',
+    '^src/(.*)$': '<rootDir>/../shared/src/$1',
   },
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -27,7 +26,6 @@ export default {
     '!src/**/*.test.ts',
     '!src/main.ts',
   ],
-  extensionsToTreatAsEsm: ['.ts'],
   coverageDirectory: 'coverage',
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
 }

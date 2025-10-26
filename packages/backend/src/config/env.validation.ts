@@ -4,8 +4,11 @@ import {
   IsNumber,
   IsOptional,
   IsUrl,
+  Min,
   validateSync,
 } from 'class-validator'
+
+export const DEFAULT_MAX_EVENT_LISTENERS = 100
 
 enum Environment {
   Development = 'development',
@@ -34,6 +37,11 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsEnum(LogLevel)
   LOG_LEVEL?: LogLevel
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  MAX_EVENT_LISTENERS?: number = DEFAULT_MAX_EVENT_LISTENERS
 }
 
 export function validate(config: Record<string, unknown>) {

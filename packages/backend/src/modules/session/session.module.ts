@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common'
 
-import { SessionService } from './session.service.js'
+import { SessionController } from './session.controller'
+import { SessionService } from './session.service'
 
 /**
  * Module for managing coding workspace sessions
- * Provides SessionService for use throughout the application
+ * Provides REST API endpoints and SessionService for use throughout the application
  */
 @Module({
+  controllers: [SessionController],
   providers: [SessionService],
   exports: [SessionService],
 })

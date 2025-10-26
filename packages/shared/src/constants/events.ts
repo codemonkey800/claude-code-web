@@ -11,16 +11,26 @@ export const WS_EVENTS = {
   // Client to Server events
   /** Ping event to test connection health */
   PING: 'ping',
-  /** Generic message event for testing echo functionality */
+  /** Generic message event for testing echo functionality (deprecated) */
   MESSAGE: 'message',
-  /** Request to create a new session */
-  SESSION_CREATE: 'session:create',
+  /** Request to join a session room */
+  SESSION_JOIN: 'session:join',
+  /** Request to leave a session room */
+  SESSION_LEAVE: 'session:leave',
+  /** Session-scoped message event */
+  SESSION_MESSAGE: 'session:message',
 
   // Server to Client events
   /** Pong response to ping event */
   PONG: 'pong',
-  /** Notification that a session was successfully created */
-  SESSION_CREATED: 'session:created',
+  /** Confirmation that client joined a session */
+  SESSION_JOINED: 'session:joined',
+  /** Confirmation that client left a session */
+  SESSION_LEFT: 'session:left',
+  /** Notification that a session was deleted */
+  SESSION_DELETED: 'session:deleted',
+  /** Notification that a session status was updated */
+  SESSION_STATUS: 'session:status',
   /** Error event for handling failures */
   ERROR: 'error',
 } as const

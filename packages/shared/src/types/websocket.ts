@@ -5,7 +5,7 @@
 
 import type { ErrorCode } from 'src/constants/events'
 
-import type { CreateSessionPayload, Session } from './session'
+import type { Session } from './session'
 
 /**
  * Base structure for all WebSocket events
@@ -33,8 +33,9 @@ export interface PingEvent extends BaseEvent {
 }
 
 /**
- * Generic message event for testing echo functionality
+ * Generic message event for testing echo functionality (deprecated - use SessionMessageEvent)
  * Server should echo the message back to the client
+ * @deprecated Use SessionMessageEvent for session-scoped messaging
  */
 export interface MessageEvent extends BaseEvent {
   type: 'message'
@@ -45,19 +46,53 @@ export interface MessageEvent extends BaseEvent {
 }
 
 /**
- * Request to create a new session
- * Server responds with SessionCreatedEvent on success or ErrorEvent on failure
+ * Request to join a session room
+ * Client must join a session before sending session-scoped messages
  */
-export interface SessionCreateEvent extends BaseEvent {
-  type: 'session:create'
-  payload: CreateSessionPayload
+export interface SessionJoinEvent extends BaseEvent {
+  type: 'session:join'
+  payload: {
+    /** ID of the session to join */
+    sessionId: string
+  }
+}
+
+/**
+ * Request to leave a session room
+ * Client will no longer receive messages from this session
+ */
+export interface SessionLeaveEvent extends BaseEvent {
+  type: 'session:leave'
+  payload: {
+    /** ID of the session to leave */
+    sessionId: string
+  }
+}
+
+/**
+ * Session-scoped message event
+ * Sends a message within the context of a specific session
+ */
+export interface SessionMessageEvent extends BaseEvent {
+  type: 'session:message'
+  payload: {
+    /** ID of the session this message belongs to */
+    sessionId: string
+    /** Message content */
+    content: string
+  }
 }
 
 /**
  * Union type of all possible client-to-server events
  * Use discriminated union pattern for type-safe event handling
  */
-export type ClientToServerEvent = PingEvent | MessageEvent | SessionCreateEvent
+export type ClientToServerEvent =
+  | PingEvent
+  | MessageEvent
+  | SessionJoinEvent
+  | SessionLeaveEvent
+  | SessionMessageEvent
 
 // ============================================================================
 // Server to Client Events
@@ -72,8 +107,9 @@ export interface PongEvent extends BaseEvent {
 }
 
 /**
- * Echo response containing the original message
+ * Echo response containing the original message (deprecated - use SessionMessageResponseEvent)
  * Sent in response to MessageEvent
+ * @deprecated Use SessionMessageResponseEvent for session-scoped messaging
  */
 export interface MessageResponseEvent extends BaseEvent {
   type: 'message'
@@ -86,13 +122,71 @@ export interface MessageResponseEvent extends BaseEvent {
 }
 
 /**
- * Successful session creation response
- * Contains the newly created session object
+ * Confirmation that client successfully joined a session
+ * Sent in response to SessionJoinEvent
  */
-export interface SessionCreatedEvent extends BaseEvent {
-  type: 'session:created'
+export interface SessionJoinedEvent extends BaseEvent {
+  type: 'session:joined'
   payload: {
-    /** The newly created session */
+    /** ID of the session that was joined */
+    sessionId: string
+    /** The full session object */
+    session: Session
+  }
+}
+
+/**
+ * Confirmation that client left a session
+ * Sent in response to SessionLeaveEvent
+ */
+export interface SessionLeftEvent extends BaseEvent {
+  type: 'session:left'
+  payload: {
+    /** ID of the session that was left */
+    sessionId: string
+  }
+}
+
+/**
+ * Session-scoped message response
+ * Broadcast to all clients in the session room
+ */
+export interface SessionMessageResponseEvent extends BaseEvent {
+  type: 'session:message'
+  payload: {
+    /** ID of the session this message belongs to */
+    sessionId: string
+    /** Message content */
+    content: string
+    /** ID of the client who sent the message */
+    senderId: string
+  }
+}
+
+/**
+ * Notification that a session was deleted
+ * Broadcast to all clients in the session room before disconnecting them
+ */
+export interface SessionDeletedEvent extends BaseEvent {
+  type: 'session:deleted'
+  payload: {
+    /** ID of the session that was deleted */
+    sessionId: string
+    /** Reason for deletion (optional) */
+    reason?: string
+  }
+}
+
+/**
+ * Notification that a session's status was updated
+ * Broadcast to all clients in the session room
+ */
+export interface SessionStatusUpdateEvent extends BaseEvent {
+  type: 'session:status'
+  payload: {
+    /** ID of the session that was updated */
+    sessionId: string
+    /** The full updated session object */
     session: Session
   }
 }
@@ -120,5 +214,9 @@ export interface ErrorEvent extends BaseEvent {
 export type ServerToClientEvent =
   | PongEvent
   | MessageResponseEvent
-  | SessionCreatedEvent
+  | SessionJoinedEvent
+  | SessionLeftEvent
+  | SessionMessageResponseEvent
+  | SessionDeletedEvent
+  | SessionStatusUpdateEvent
   | ErrorEvent
