@@ -6,11 +6,13 @@ import { useContext } from 'react'
 
 import { SocketContext } from 'src/context/SocketContext'
 
+import type { SocketContextState } from 'src/types/socket'
+
 /**
  * Hook to access socket instance and connection state
  * @throws Error if used outside of SocketProvider
  */
-export function useSocket() {
+export function useSocket(): SocketContextState {
   const context = useContext(SocketContext)
 
   if (!context) {

@@ -1,5 +1,11 @@
-import type { CreateSessionPayload } from '@claude-code-web/shared'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { CreateSessionPayload, Session } from '@claude-code-web/shared'
+import {
+  useMutation,
+  type UseMutationResult,
+  useQuery,
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query'
 
 import { queries } from 'src/api/queryKeys'
 import { createSession } from 'src/api/sessions'
@@ -10,7 +16,7 @@ import { createSession } from 'src/api/sessions'
  *
  * @returns Query result with sessions data, loading state, and error
  */
-export function useSessions() {
+export function useSessions(): UseQueryResult<Session[], Error> {
   return useQuery(queries.sessions.list)
 }
 
@@ -20,12 +26,18 @@ export function useSessions() {
  *
  * @returns Mutation object with mutate function, loading state, and error
  */
-export function useCreateSession() {
+export function useCreateSession(): UseMutationResult<
+  Session,
+  Error,
+  CreateSessionPayload | undefined,
+  unknown
+> {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (payload?: CreateSessionPayload) => createSession(payload),
-    onSuccess: () => {
+    mutationFn: (payload?: CreateSessionPayload): Promise<Session> =>
+      createSession(payload),
+    onSuccess: (): void => {
       // Invalidate and refetch sessions list after successful creation
       void queryClient.invalidateQueries({
         queryKey: queries.sessions.list.queryKey,

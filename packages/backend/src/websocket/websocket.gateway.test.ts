@@ -7,7 +7,7 @@ import {
 import { Test, TestingModule } from '@nestjs/testing'
 import type { Server, Socket } from 'socket.io'
 
-import { SessionService } from 'src/modules/session/session.service'
+import { SessionService } from 'src/session/session.service'
 
 import { AppWebSocketGateway } from './websocket.gateway'
 
@@ -41,7 +41,7 @@ describe('AppWebSocketGateway', () => {
   // Helper to create a mock Session
   const createMockSession = (overrides?: Partial<Session>): Session => ({
     id: '550e8400-e29b-41d4-a716-446655440000',
-    status: SessionStatus.PENDING,
+    status: SessionStatus.INITIALIZING,
     workingDirectory: '/test/dir',
     createdAt: new Date('2024-01-01T00:00:00.000Z'),
     updatedAt: new Date('2024-01-01T00:00:00.000Z'),
@@ -171,6 +171,7 @@ describe('AppWebSocketGateway', () => {
         payload: { sessionId },
       })
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(sessionService.getSession).toHaveBeenCalledWith(sessionId)
     })
 
@@ -430,6 +431,7 @@ describe('AppWebSocketGateway', () => {
       expect(roomEmit).toHaveBeenCalledWith(
         WS_EVENTS.SESSION_MESSAGE,
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           payload: expect.objectContaining({
             senderId: 'client-1',
           }),
@@ -595,6 +597,7 @@ describe('AppWebSocketGateway', () => {
       expect(roomEmit).toHaveBeenCalledWith(
         WS_EVENTS.SESSION_DELETED,
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           payload: expect.objectContaining({
             reason,
           }),
@@ -631,7 +634,7 @@ describe('AppWebSocketGateway', () => {
       const sessionId = '550e8400-e29b-41d4-a716-446655440000'
       const session = createMockSession({
         id: sessionId,
-        status: SessionStatus.COMPLETED,
+        status: SessionStatus.TERMINATED,
       })
 
       const sessionRooms = gateway['sessionRooms']
@@ -739,6 +742,7 @@ describe('AppWebSocketGateway', () => {
       expect(mockClient.emit).toHaveBeenCalledWith(
         WS_EVENTS.MESSAGE,
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           payload: expect.objectContaining({
             echo: true,
           }),

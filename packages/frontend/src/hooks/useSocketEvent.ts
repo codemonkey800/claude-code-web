@@ -21,10 +21,10 @@ import { useSocket } from 'src/hooks/useSocket'
 export function useSocketEvent<T = unknown>(
   eventName: string,
   handler: (data: T) => void,
-) {
+): void {
   const { socket } = useSocket()
 
-  useEffect(() => {
+  useEffect((): (() => void) | undefined => {
     if (!socket) {
       return
     }
@@ -33,7 +33,7 @@ export function useSocketEvent<T = unknown>(
     socket.on(eventName, handler)
 
     // Cleanup: unsubscribe when component unmounts or dependencies change
-    return () => {
+    return (): void => {
       socket.off(eventName, handler)
     }
   }, [socket, eventName, handler])

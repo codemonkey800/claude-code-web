@@ -48,7 +48,7 @@ export function MessageTester() {
 
   // Handle pong responses
   const handlePong = useCallback(
-    (data: PongEvent) => {
+    (data: PongEvent): void => {
       if (data.id && data.id === pendingPingId && pendingPingSentAt) {
         const receivedAt = Date.now()
         const roundTripTime = receivedAt - pendingPingSentAt
@@ -71,7 +71,7 @@ export function MessageTester() {
 
   // Handle message responses
   const handleMessageResponse = useCallback(
-    (data: MessageResponseEvent) => {
+    (data: MessageResponseEvent): void => {
       const responseId = data.id
       if (responseId && pendingMessageIds.has(responseId)) {
         // Add received message to history
@@ -106,7 +106,7 @@ export function MessageTester() {
 
   useSocketEvent<MessageResponseEvent>(WS_EVENTS.MESSAGE, handleMessageResponse)
 
-  const handlePingClick = () => {
+  const handlePingClick = (): void => {
     if (!socket || !isConnected || pingPending) return
 
     const id = crypto.randomUUID()
@@ -125,7 +125,7 @@ export function MessageTester() {
     socket.emit(WS_EVENTS.PING, pingEvent)
   }
 
-  const handleSendMessage = () => {
+  const handleSendMessage = (): void => {
     if (!socket || !isConnected || !messageInput.trim() || messagePending)
       return
 
@@ -158,11 +158,11 @@ export function MessageTester() {
     setMessageInput('')
   }
 
-  const handleClearHistory = () => {
+  const handleClearHistory = (): void => {
     setMessageHistory([])
   }
 
-  const formatTime = (timestamp: number) => {
+  const formatTime = (timestamp: number): string => {
     return new Date(timestamp).toLocaleTimeString('en-US', {
       hour12: false,
       hour: '2-digit',
@@ -243,8 +243,8 @@ export function MessageTester() {
             <input
               type="text"
               value={messageInput}
-              onChange={e => setMessageInput(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e): void => setMessageInput(e.target.value)}
+              onKeyDown={(e): void => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
                   handleSendMessage()

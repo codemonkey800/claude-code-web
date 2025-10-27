@@ -16,11 +16,6 @@ export default [
   },
   {
     files: ['**/*.test.ts', '**/*.spec.ts'],
-    rules: {
-      '@typescript-eslint/unbound-method': 'off',
-      'jest/unbound-method': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-    },
     languageOptions: {
       globals: {
         describe: 'readonly',

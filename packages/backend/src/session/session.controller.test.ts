@@ -62,7 +62,7 @@ describe('SessionController', () => {
   // Helper to create a mock session
   const createMockSession = (overrides?: Partial<Session>): Session => ({
     id: '550e8400-e29b-41d4-a716-446655440000',
-    status: SessionStatus.PENDING,
+    status: SessionStatus.INITIALIZING,
     workingDirectory: '/test/dir',
     createdAt: new Date('2024-01-01T00:00:00.000Z'),
     updatedAt: new Date('2024-01-01T00:00:00.000Z'),
@@ -119,6 +119,7 @@ describe('SessionController', () => {
       if (result.status === 201) {
         expect(result.body).toHaveProperty('id', mockSession.id)
       }
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(sessionService.createSession).toHaveBeenCalledWith({
         workingDirectory: '/test/dir',
       })
@@ -181,7 +182,9 @@ describe('SessionController', () => {
         body: payload,
       })
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(sessionService.createSession).toHaveBeenCalledWith(payload)
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(sessionService.createSession).toHaveBeenCalledTimes(1)
     })
   })
@@ -203,6 +206,7 @@ describe('SessionController', () => {
       if (result.status === 200) {
         expect(result.body).toHaveLength(2)
       }
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(sessionService.getAllSessions).toHaveBeenCalledTimes(1)
     })
 
@@ -261,6 +265,7 @@ describe('SessionController', () => {
       if (result.status === 200) {
         expect(result.body).toHaveProperty('id', mockSession.id)
       }
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(sessionService.getSession).toHaveBeenCalledWith(mockSession.id)
     })
 
@@ -317,6 +322,7 @@ describe('SessionController', () => {
       if (result.status === 200) {
         expect(result.body).toHaveProperty('status', SessionStatus.ACTIVE)
       }
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(sessionService.updateSessionStatus).toHaveBeenCalledWith(
         mockSession.id,
         SessionStatus.ACTIVE,
@@ -352,10 +358,12 @@ describe('SessionController', () => {
         body: { status: SessionStatus.ACTIVE },
       })
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(eventEmitter.emit).toHaveBeenCalledWith('session.updated', {
         sessionId: mockSession.id,
         session: mockSession,
       })
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(eventEmitter.emit).toHaveBeenCalledTimes(1)
     })
 
@@ -386,12 +394,9 @@ describe('SessionController', () => {
       const handlerInstance = controller.handler()
 
       const statuses = [
-        SessionStatus.PENDING,
+        SessionStatus.INITIALIZING,
         SessionStatus.ACTIVE,
-        SessionStatus.PAUSED,
-        SessionStatus.COMPLETED,
-        SessionStatus.FAILED,
-        SessionStatus.CANCELLED,
+        SessionStatus.TERMINATED,
       ]
 
       for (const status of statuses) {
@@ -429,6 +434,7 @@ describe('SessionController', () => {
       if (result.status === 204) {
         expect(result.body).toBeUndefined()
       }
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(sessionService.deleteSession).toHaveBeenCalledWith(
         '550e8400-e29b-41d4-a716-446655440000',
       )
@@ -463,10 +469,12 @@ describe('SessionController', () => {
         body: null,
       })
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(eventEmitter.emit).toHaveBeenCalledWith('session.deleted', {
         sessionId,
         reason: 'Deleted via REST API',
       })
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(eventEmitter.emit).toHaveBeenCalledTimes(1)
     })
 

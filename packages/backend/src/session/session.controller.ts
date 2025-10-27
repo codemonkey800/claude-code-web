@@ -27,7 +27,13 @@ export class SessionController {
    * @param session - The session to serialize
    * @returns Serialized session with string dates
    */
-  private serializeSession(session: Session) {
+  private serializeSession(session: Session): Omit<
+    Session,
+    'createdAt' | 'updatedAt'
+  > & {
+    createdAt: string
+    updatedAt: string
+  } {
     return {
       ...session,
       createdAt: session.createdAt.toISOString(),
@@ -41,7 +47,16 @@ export class SessionController {
    * @param error - The error that occurred
    * @returns Standardized 500 error response
    */
-  private handleError(operation: string, error: unknown) {
+  private handleError(
+    operation: string,
+    error: unknown,
+  ): {
+    status: number
+    body: {
+      message: string
+      error?: string
+    }
+  } {
     this.logger.error(operation, getErrorMessage(error))
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,

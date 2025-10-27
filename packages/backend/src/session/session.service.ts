@@ -7,6 +7,8 @@ import {
 } from '@claude-code-web/shared'
 import { Injectable, Logger } from '@nestjs/common'
 
+import { FileSystemService } from 'src/filesystem/filesystem.service'
+
 /**
  * Service for managing coding workspace sessions
  * Handles session lifecycle, storage, and state management
@@ -16,19 +18,51 @@ export class SessionService {
   private readonly logger = new Logger(SessionService.name)
   private readonly sessions = new Map<string, Session>()
 
+  constructor(private readonly fileSystemService: FileSystemService) {}
+
   /**
    * Creates a new session with the provided payload
+   * Validates the working directory before creating the session
    * @param payload - Session creation parameters
    * @returns The newly created session
+   * @throws {Error} if the working directory is invalid
    */
-  createSession(payload: CreateSessionPayload): Session {
+  async createSession(payload: CreateSessionPayload): Promise<Session> {
     const sessionId = randomUUID()
     const now = new Date()
 
+    // Determine working directory (use payload or default to cwd)
+    const workingDirectory = payload.workingDirectory || process.cwd()
+
+    // Validate the working directory using FileSystemService
+    const validation =
+      await this.fileSystemService.validatePath(workingDirectory)
+
+    if (!validation.valid) {
+      this.logger.error(
+        `Failed to create session: Invalid working directory - ${validation.error}`,
+      )
+      throw new Error(
+        `Invalid working directory: ${validation.error || 'Path validation failed'}`,
+      )
+    }
+
+    if (!validation.isDirectory) {
+      this.logger.error(
+        `Failed to create session: Path is not a directory - ${workingDirectory}`,
+      )
+      throw new Error(
+        `Working directory must be a directory, not a file: ${workingDirectory}`,
+      )
+    }
+
+    // Use the resolved absolute path from validation
+    const resolvedPath = validation.resolvedPath || workingDirectory
+
     const session: Session = {
       id: sessionId,
-      status: SessionStatus.PENDING,
-      workingDirectory: payload.workingDirectory || process.cwd(),
+      status: SessionStatus.INITIALIZING,
+      workingDirectory: resolvedPath,
       createdAt: now,
       updatedAt: now,
       metadata: payload.metadata,

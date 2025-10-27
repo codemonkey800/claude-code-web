@@ -17,7 +17,7 @@ export function ConnectionStatusToast() {
   const [open, setOpen] = useState(false)
   const prevStatus = useRef<ConnectionStatus | null>(null)
 
-  useEffect(() => {
+  useEffect((): void => {
     // Only show toast if connection status actually changed
     if (
       prevStatus.current !== null &&
@@ -28,14 +28,14 @@ export function ConnectionStatusToast() {
     prevStatus.current = connectionStatus
   }, [connectionStatus])
 
-  const getDuration = () => {
+  const getDuration = (): number => {
     if (connectionStatus === ConnectionStatus.CONNECTED) {
       return 5000 // auto-close after 5 seconds
     }
     return Infinity // persistent for all other states
   }
 
-  const getToastStyles = () => {
+  const getToastStyles = (): string => {
     switch (connectionStatus) {
       case ConnectionStatus.CONNECTED:
         return 'bg-green-100 border-green-500 text-green-900'
@@ -67,7 +67,7 @@ export function ConnectionStatusToast() {
     }
   }
 
-  const getToastMessage = () => {
+  const getToastMessage = (): string => {
     switch (connectionStatus) {
       case ConnectionStatus.CONNECTED:
         return 'Connected to WebSocket server'

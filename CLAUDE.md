@@ -36,7 +36,7 @@ packages/
    - WebSocket handles real-time updates only (no CRUD)
    - Flow: Controller → Service → `EventEmitter2.emit()` → WebSocketGateway → Client
 
-3. **Session Rooms** (`backend/src/modules/websocket/`):
+3. **Session Rooms** (`backend/src/websocket/`):
    - Each session has a dedicated Socket.io room (`session:${id}`)
    - Broadcasts are targeted to specific session rooms
    - Prevents cross-session message leakage
@@ -60,16 +60,19 @@ backend/src/
 ├── config/
 │   └── env.validation.ts      # Environment variable validation
 ├── common/                    # Shared utilities, decorators, etc.
-└── modules/
-    ├── session/               # Session CRUD + state management
-    │   ├── session.module.ts
-    │   ├── session.service.ts      # Business logic + EventEmitter
-    │   ├── session.controller.ts   # ts-rest implementation
-    │   └── *.test.ts
-    └── websocket/             # Real-time communication
-        ├── websocket.module.ts
-        ├── websocket.gateway.ts    # Socket.io handlers
-        └── *.test.ts
+├── filesystem/                # Filesystem operations
+│   ├── filesystem.module.ts
+│   ├── filesystem.service.ts
+│   └── filesystem.controller.ts
+├── session/                   # Session CRUD + state management
+│   ├── session.module.ts
+│   ├── session.service.ts      # Business logic + EventEmitter
+│   ├── session.controller.ts   # ts-rest implementation
+│   └── *.test.ts
+└── websocket/                 # Real-time communication
+    ├── websocket.module.ts
+    ├── websocket.gateway.ts    # Socket.io handlers
+    └── *.test.ts
 ```
 
 **Key Services:**
@@ -322,7 +325,7 @@ export * from './contracts/your-feature.contract'
 ### 3. Implement Backend Service
 
 ```typescript
-// packages/backend/src/modules/your-feature/your-feature.service.ts
+// packages/backend/src/your-feature/your-feature.service.ts
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 
@@ -341,7 +344,7 @@ export class YourFeatureService {
 ### 4. Implement Backend Controller
 
 ```typescript
-// packages/backend/src/modules/your-feature/your-feature.controller.ts
+// packages/backend/src/your-feature/your-feature.controller.ts
 import { TsRestHandler, tsRestHandler } from '@ts-rest/nest'
 import { yourFeatureContract } from '@claude-code-web/shared'
 
@@ -360,7 +363,7 @@ export class YourFeatureController {
 ### 5. Add WebSocket Listener (if broadcasting updates)
 
 ```typescript
-// packages/backend/src/modules/websocket/websocket.gateway.ts
+// packages/backend/src/websocket/websocket.gateway.ts
 @OnEvent('your-feature.updated')
 handleYourFeatureUpdate(data: YourFeatureData) {
   // Broadcast to appropriate room

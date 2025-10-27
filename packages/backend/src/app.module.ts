@@ -3,8 +3,9 @@ import { ConfigModule } from '@nestjs/config'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 
 import { DEFAULT_MAX_EVENT_LISTENERS, validate } from './config/env.validation'
-import { SessionModule } from './modules/session/session.module'
-import { WebSocketModule } from './modules/websocket/websocket.module'
+import { FileSystemModule } from './filesystem/filesystem.module'
+import { SessionModule } from './session/session.module'
+import { WebSocketModule } from './websocket/websocket.module'
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { WebSocketModule } from './modules/websocket/websocket.module'
         ? Number(process.env.MAX_EVENT_LISTENERS)
         : DEFAULT_MAX_EVENT_LISTENERS,
     }),
+    FileSystemModule,
     SessionModule,
     WebSocketModule,
   ],

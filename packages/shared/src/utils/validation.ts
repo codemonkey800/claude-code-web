@@ -6,6 +6,7 @@
 import { z } from 'zod'
 
 import { ERROR_CODES, WS_EVENTS } from 'src/constants/events'
+import { FileSystemNodeType, SortBy, SortDirection } from 'src/types/filesystem'
 import { SessionStatus } from 'src/types/session'
 
 // ============================================================================
@@ -50,6 +51,142 @@ export const createSessionPayloadSchema = z
   .object({
     workingDirectory: z.string().optional(),
     metadata: sessionMetadataSchema.optional(),
+  })
+  .strict()
+
+// ============================================================================
+// File System Validation Schemas
+// ============================================================================
+
+/**
+ * Validates FileSystemNodeType enum values
+ */
+export const fileSystemNodeTypeSchema = z.nativeEnum(FileSystemNodeType)
+
+/**
+ * Validates SortBy enum values
+ */
+export const sortBySchema = z.nativeEnum(SortBy)
+
+/**
+ * Validates SortDirection enum values
+ */
+export const sortDirectionSchema = z.nativeEnum(SortDirection)
+
+/**
+ * Validates FileMetadata structure
+ */
+export const fileMetadataSchema = z
+  .object({
+    permissions: z.string().optional(),
+    owner: z.string().optional(),
+    isReadable: z.boolean(),
+    isWritable: z.boolean(),
+    isExecutable: z.boolean().optional(),
+  })
+  .strict()
+
+/**
+ * Validates FileSystemEntry base structure
+ * Accepts both Date objects and ISO strings for timestamps
+ */
+export const fileSystemEntrySchema = z
+  .object({
+    name: z.string().min(1),
+    path: z.string().min(1),
+    type: fileSystemNodeTypeSchema,
+    size: z.number().int().min(0),
+    modifiedAt: z.union([z.date(), z.string().datetime()]),
+    metadata: fileMetadataSchema,
+  })
+  .strict()
+
+/**
+ * Validates DirectoryEntry structure
+ */
+export const directoryEntrySchema = fileSystemEntrySchema
+  .extend({
+    type: z.literal(FileSystemNodeType.DIRECTORY),
+    itemCount: z.number().int().min(0).optional(),
+  })
+  .strict()
+
+/**
+ * Validates FileEntry structure
+ */
+export const fileEntrySchema = fileSystemEntrySchema
+  .extend({
+    type: z.literal(FileSystemNodeType.FILE),
+    extension: z.string().optional(),
+    mimeType: z.string().optional(),
+  })
+  .strict()
+
+/**
+ * Validates FileSystemNode discriminated union
+ */
+export const fileSystemNodeSchema = z.discriminatedUnion('type', [
+  directoryEntrySchema,
+  fileEntrySchema,
+])
+
+/**
+ * Validates DirectoryBrowseOptions
+ */
+export const directoryBrowseOptionsSchema = z
+  .object({
+    showHidden: z.boolean().optional(),
+    pageSize: z.number().int().min(1).max(500).optional(),
+    page: z.number().int().min(1).optional(),
+    sortBy: sortBySchema.optional(),
+    sortDirection: sortDirectionSchema.optional(),
+  })
+  .strict()
+
+/**
+ * Validates PaginationMetadata
+ */
+export const paginationMetadataSchema = z
+  .object({
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1),
+    totalItems: z.number().int().min(0),
+    totalPages: z.number().int().min(0),
+    hasNextPage: z.boolean(),
+    hasPreviousPage: z.boolean(),
+  })
+  .strict()
+
+/**
+ * Validates DirectoryBrowseResponse
+ */
+export const directoryBrowseResponseSchema = z
+  .object({
+    path: z.string().min(1),
+    entries: z.array(fileSystemNodeSchema),
+    pagination: paginationMetadataSchema,
+  })
+  .strict()
+
+/**
+ * Validates ValidatePathPayload
+ */
+export const validatePathPayloadSchema = z
+  .object({
+    path: z.string().min(1),
+  })
+  .strict()
+
+/**
+ * Validates ValidatePathResponse
+ */
+export const validatePathResponseSchema = z
+  .object({
+    valid: z.boolean(),
+    error: z.string().optional(),
+    resolvedPath: z.string().optional(),
+    isDirectory: z.boolean().optional(),
+    metadata: fileMetadataSchema.optional(),
   })
   .strict()
 
@@ -307,46 +444,123 @@ export const serverToClientEventSchema = z.discriminatedUnion('type', [
  * Validates and parses a Session object
  * @throws {ZodError} if validation fails
  */
-export const validateSession = (data: unknown) => sessionSchema.parse(data)
+export const validateSession = (data: unknown): z.infer<typeof sessionSchema> =>
+  sessionSchema.parse(data)
 
 /**
  * Validates and parses a CreateSessionPayload
  * @throws {ZodError} if validation fails
  */
-export const validateCreateSessionPayload = (data: unknown) =>
+export const validateCreateSessionPayload = (
+  data: unknown,
+): z.infer<typeof createSessionPayloadSchema> =>
   createSessionPayloadSchema.parse(data)
 
 /**
  * Validates and parses a client-to-server event
  * @throws {ZodError} if validation fails
  */
-export const validateClientEvent = (data: unknown) =>
+export const validateClientEvent = (
+  data: unknown,
+): z.infer<typeof clientToServerEventSchema> =>
   clientToServerEventSchema.parse(data)
 
 /**
  * Validates and parses a server-to-client event
  * @throws {ZodError} if validation fails
  */
-export const validateServerEvent = (data: unknown) =>
+export const validateServerEvent = (
+  data: unknown,
+): z.infer<typeof serverToClientEventSchema> =>
   serverToClientEventSchema.parse(data)
 
 /**
  * Safely validates data without throwing
  * @returns {success: true, data: T} | {success: false, error: ZodError}
  */
-export const safeValidateSession = (data: unknown) =>
+export const safeValidateSession = (
+  data: unknown,
+): z.SafeParseReturnType<unknown, z.infer<typeof sessionSchema>> =>
   sessionSchema.safeParse(data)
 
 /**
  * Safely validates client event without throwing
  * @returns {success: true, data: T} | {success: false, error: ZodError}
  */
-export const safeValidateClientEvent = (data: unknown) =>
+export const safeValidateClientEvent = (
+  data: unknown,
+): z.SafeParseReturnType<unknown, z.infer<typeof clientToServerEventSchema>> =>
   clientToServerEventSchema.safeParse(data)
 
 /**
  * Safely validates server event without throwing
  * @returns {success: true, data: T} | {success: false, error: ZodError}
  */
-export const safeValidateServerEvent = (data: unknown) =>
+export const safeValidateServerEvent = (
+  data: unknown,
+): z.SafeParseReturnType<unknown, z.infer<typeof serverToClientEventSchema>> =>
   serverToClientEventSchema.safeParse(data)
+
+/**
+ * Validates and parses a FileSystemNode object
+ * @throws {ZodError} if validation fails
+ */
+export const validateFileSystemNode = (
+  data: unknown,
+): z.infer<typeof fileSystemNodeSchema> => fileSystemNodeSchema.parse(data)
+
+/**
+ * Validates and parses DirectoryBrowseOptions
+ * @throws {ZodError} if validation fails
+ */
+export const validateDirectoryBrowseOptions = (
+  data: unknown,
+): z.infer<typeof directoryBrowseOptionsSchema> =>
+  directoryBrowseOptionsSchema.parse(data)
+
+/**
+ * Validates and parses ValidatePathPayload
+ * @throws {ZodError} if validation fails
+ */
+export const validatePathPayload = (
+  data: unknown,
+): z.infer<typeof validatePathPayloadSchema> =>
+  validatePathPayloadSchema.parse(data)
+
+/**
+ * Validates and parses DirectoryBrowseResponse
+ * @throws {ZodError} if validation fails
+ */
+export const validateDirectoryBrowseResponse = (
+  data: unknown,
+): z.infer<typeof directoryBrowseResponseSchema> =>
+  directoryBrowseResponseSchema.parse(data)
+
+/**
+ * Validates and parses ValidatePathResponse
+ * @throws {ZodError} if validation fails
+ */
+export const validatePathResponse = (
+  data: unknown,
+): z.infer<typeof validatePathResponseSchema> =>
+  validatePathResponseSchema.parse(data)
+
+/**
+ * Safely validates FileSystemNode without throwing
+ * @returns {success: true, data: T} | {success: false, error: ZodError}
+ */
+export const safeValidateFileSystemNode = (
+  data: unknown,
+): z.SafeParseReturnType<unknown, z.infer<typeof fileSystemNodeSchema>> =>
+  fileSystemNodeSchema.safeParse(data)
+
+/**
+ * Safely validates DirectoryBrowseOptions without throwing
+ * @returns {success: true, data: T} | {success: false, error: ZodError}
+ */
+export const safeValidateDirectoryBrowseOptions = (
+  data: unknown,
+): z.SafeParseReturnType<
+  unknown,
+  z.infer<typeof directoryBrowseOptionsSchema>
+> => directoryBrowseOptionsSchema.safeParse(data)

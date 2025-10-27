@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto'
 import { SessionStatus } from '@claude-code-web/shared'
 import { Test, TestingModule } from '@nestjs/testing'
 
+import { FileSystemService } from 'src/filesystem/filesystem.service'
+
 import { SessionService } from './session.service'
 
 // Mock the crypto module
@@ -14,8 +16,24 @@ describe('SessionService', () => {
   let service: SessionService
 
   beforeEach(async () => {
+    const mockFileSystemService = {
+      validatePath: jest.fn().mockImplementation((path: string) =>
+        Promise.resolve({
+          valid: true,
+          isDirectory: true,
+          resolvedPath: path,
+        }),
+      ),
+    }
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SessionService],
+      providers: [
+        SessionService,
+        {
+          provide: FileSystemService,
+          useValue: mockFileSystemService,
+        },
+      ],
     }).compile()
 
     service = module.get<SessionService>(SessionService)
@@ -23,55 +41,55 @@ describe('SessionService', () => {
   })
 
   describe('createSession', () => {
-    it('should create a session with UUID', () => {
+    it('should create a session with UUID', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
       const payload = { workingDirectory: '/test/dir' }
-      const session = service.createSession(payload)
+      const session = await service.createSession(payload)
 
       expect(session.id).toBe(mockUuid)
       expect(randomUUID).toHaveBeenCalledTimes(1)
     })
 
-    it('should set status to PENDING by default', () => {
+    it('should set status to INITIALIZING by default', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
       const payload = { workingDirectory: '/test/dir' }
-      const session = service.createSession(payload)
+      const session = await service.createSession(payload)
 
-      expect(session.status).toBe(SessionStatus.PENDING)
+      expect(session.status).toBe(SessionStatus.INITIALIZING)
     })
 
-    it('should use provided workingDirectory', () => {
+    it('should use provided workingDirectory', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
       const testDir = '/custom/test/directory'
       const payload = { workingDirectory: testDir }
-      const session = service.createSession(payload)
+      const session = await service.createSession(payload)
 
       expect(session.workingDirectory).toBe(testDir)
     })
 
-    it('should default to process.cwd() when workingDirectory not provided', () => {
+    it('should default to process.cwd() when workingDirectory not provided', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
       const payload = {}
-      const session = service.createSession(payload)
+      const session = await service.createSession(payload)
 
       expect(session.workingDirectory).toBe(process.cwd())
     })
 
-    it('should set createdAt and updatedAt timestamps', () => {
+    it('should set createdAt and updatedAt timestamps', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
       const beforeCreation = new Date()
       const payload = { workingDirectory: '/test/dir' }
-      const session = service.createSession(payload)
+      const session = await service.createSession(payload)
       const afterCreation = new Date()
 
       expect(session.createdAt).toBeInstanceOf(Date)
@@ -85,7 +103,7 @@ describe('SessionService', () => {
       expect(session.createdAt).toEqual(session.updatedAt)
     })
 
-    it('should store metadata if provided', () => {
+    it('should store metadata if provided', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
@@ -95,12 +113,12 @@ describe('SessionService', () => {
         description: 'Test session',
       }
       const payload = { workingDirectory: '/test/dir', metadata }
-      const session = service.createSession(payload)
+      const session = await service.createSession(payload)
 
       expect(session.metadata).toEqual(metadata)
     })
 
-    it('should increment session count', () => {
+    it('should increment session count', async () => {
       const mockUuid1 = '550e8400-e29b-41d4-a716-446655440000'
       const mockUuid2 = '550e8400-e29b-41d4-a716-446655440001'
       ;(randomUUID as jest.Mock)
@@ -109,21 +127,21 @@ describe('SessionService', () => {
 
       const initialCount = service.getSessionCount()
 
-      service.createSession({ workingDirectory: '/test/dir1' })
+      await service.createSession({ workingDirectory: '/test/dir1' })
       expect(service.getSessionCount()).toBe(initialCount + 1)
 
-      service.createSession({ workingDirectory: '/test/dir2' })
+      await service.createSession({ workingDirectory: '/test/dir2' })
       expect(service.getSessionCount()).toBe(initialCount + 2)
     })
   })
 
   describe('getSession', () => {
-    it('should return existing session by ID', () => {
+    it('should return existing session by ID', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
       const payload = { workingDirectory: '/test/dir' }
-      const createdSession = service.createSession(payload)
+      const createdSession = await service.createSession(payload)
 
       const retrievedSession = service.getSession(mockUuid)
 
@@ -146,17 +164,17 @@ describe('SessionService', () => {
       expect(Array.isArray(sessions)).toBe(true)
     })
 
-    it('should return all sessions', () => {
+    it('should return all sessions', async () => {
       const mockUuid1 = '550e8400-e29b-41d4-a716-446655440000'
       const mockUuid2 = '550e8400-e29b-41d4-a716-446655440001'
       ;(randomUUID as jest.Mock)
         .mockReturnValueOnce(mockUuid1)
         .mockReturnValueOnce(mockUuid2)
 
-      const session1 = service.createSession({
+      const session1 = await service.createSession({
         workingDirectory: '/test/dir1',
       })
-      const session2 = service.createSession({
+      const session2 = await service.createSession({
         workingDirectory: '/test/dir2',
       })
 
@@ -167,11 +185,11 @@ describe('SessionService', () => {
       expect(allSessions).toContainEqual(session2)
     })
 
-    it('should return independent array (not modify internal state)', () => {
+    it('should return independent array (not modify internal state)', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
-      service.createSession({ workingDirectory: '/test/dir' })
+      await service.createSession({ workingDirectory: '/test/dir' })
 
       const sessions1 = service.getAllSessions()
       const sessions2 = service.getAllSessions()
@@ -182,11 +200,11 @@ describe('SessionService', () => {
   })
 
   describe('updateSessionStatus', () => {
-    it('should update session status successfully', () => {
+    it('should update session status successfully', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
-      service.createSession({ workingDirectory: '/test/dir' })
+      await service.createSession({ workingDirectory: '/test/dir' })
 
       const updatedSession = service.updateSessionStatus(
         mockUuid,
@@ -201,7 +219,7 @@ describe('SessionService', () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
-      const session = service.createSession({
+      const session = await service.createSession({
         workingDirectory: '/test/dir',
       })
       const originalUpdatedAt = session.updatedAt
@@ -230,19 +248,16 @@ describe('SessionService', () => {
       expect(result).toBeNull()
     })
 
-    it('should handle all SessionStatus enum values', () => {
+    it('should handle all SessionStatus enum values', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
-      service.createSession({ workingDirectory: '/test/dir' })
+      await service.createSession({ workingDirectory: '/test/dir' })
 
       const statuses = [
-        SessionStatus.PENDING,
+        SessionStatus.INITIALIZING,
         SessionStatus.ACTIVE,
-        SessionStatus.PAUSED,
-        SessionStatus.COMPLETED,
-        SessionStatus.FAILED,
-        SessionStatus.CANCELLED,
+        SessionStatus.TERMINATED,
       ]
 
       for (const status of statuses) {
@@ -253,11 +268,11 @@ describe('SessionService', () => {
   })
 
   describe('deleteSession', () => {
-    it('should delete existing session and return true', () => {
+    it('should delete existing session and return true', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
-      service.createSession({ workingDirectory: '/test/dir' })
+      await service.createSession({ workingDirectory: '/test/dir' })
 
       const result = service.deleteSession(mockUuid)
 
@@ -275,15 +290,15 @@ describe('SessionService', () => {
       expect(result).toBe(false)
     })
 
-    it('should decrement session count', () => {
+    it('should decrement session count', async () => {
       const mockUuid1 = '550e8400-e29b-41d4-a716-446655440000'
       const mockUuid2 = '550e8400-e29b-41d4-a716-446655440001'
       ;(randomUUID as jest.Mock)
         .mockReturnValueOnce(mockUuid1)
         .mockReturnValueOnce(mockUuid2)
 
-      service.createSession({ workingDirectory: '/test/dir1' })
-      service.createSession({ workingDirectory: '/test/dir2' })
+      await service.createSession({ workingDirectory: '/test/dir1' })
+      await service.createSession({ workingDirectory: '/test/dir2' })
 
       const countBefore = service.getSessionCount()
 
@@ -300,7 +315,7 @@ describe('SessionService', () => {
       expect(count).toBe(0)
     })
 
-    it('should return correct count after operations', () => {
+    it('should return correct count after operations', async () => {
       const mockUuid1 = '550e8400-e29b-41d4-a716-446655440000'
       const mockUuid2 = '550e8400-e29b-41d4-a716-446655440001'
       const mockUuid3 = '550e8400-e29b-41d4-a716-446655440002'
@@ -311,25 +326,25 @@ describe('SessionService', () => {
 
       expect(service.getSessionCount()).toBe(0)
 
-      service.createSession({ workingDirectory: '/test/dir1' })
+      await service.createSession({ workingDirectory: '/test/dir1' })
       expect(service.getSessionCount()).toBe(1)
 
-      service.createSession({ workingDirectory: '/test/dir2' })
+      await service.createSession({ workingDirectory: '/test/dir2' })
       expect(service.getSessionCount()).toBe(2)
 
-      service.createSession({ workingDirectory: '/test/dir3' })
+      await service.createSession({ workingDirectory: '/test/dir3' })
       expect(service.getSessionCount()).toBe(3)
     })
 
-    it('should update after create/delete operations', () => {
+    it('should update after create/delete operations', async () => {
       const mockUuid1 = '550e8400-e29b-41d4-a716-446655440000'
       const mockUuid2 = '550e8400-e29b-41d4-a716-446655440001'
       ;(randomUUID as jest.Mock)
         .mockReturnValueOnce(mockUuid1)
         .mockReturnValueOnce(mockUuid2)
 
-      service.createSession({ workingDirectory: '/test/dir1' })
-      service.createSession({ workingDirectory: '/test/dir2' })
+      await service.createSession({ workingDirectory: '/test/dir1' })
+      await service.createSession({ workingDirectory: '/test/dir2' })
       expect(service.getSessionCount()).toBe(2)
 
       service.deleteSession(mockUuid1)

@@ -10,6 +10,9 @@
 // Session types - SessionStatus, Session, SessionMetadata, CreateSessionPayload
 export * from './types/session'
 
+// File system types - FileSystemNodeType, DirectoryEntry, FileEntry, FileSystemNode, etc.
+export * from './types/filesystem'
+
 // WebSocket event types - ClientToServerEvent, ServerToClientEvent, and all specific events
 export * from './types/websocket'
 
@@ -35,4 +38,5 @@ export * from './utils/error'
 // ============================================================================
 
 // REST API contracts using ts-rest
+export * from './contracts/filesystem.contract'
 export * from './contracts/sessions.contract'

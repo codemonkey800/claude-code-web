@@ -7,12 +7,12 @@
  * Possible states for a session lifecycle
  */
 export enum SessionStatus {
-  PENDING = 'pending',
+  /** Session created, Claude Code starting up */
+  INITIALIZING = 'initializing',
+  /** Claude Code running, accepting commands */
   ACTIVE = 'active',
-  PAUSED = 'paused',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  CANCELLED = 'cancelled',
+  /** Session ended (any reason) */
+  TERMINATED = 'terminated',
 }
 
 /**
