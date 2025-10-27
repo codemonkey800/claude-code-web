@@ -102,10 +102,17 @@ export class FileSystemService {
     // Process all entries in parallel for better performance
     const entryPromises = dirents.map(async dirent => {
       const fullPath = join(resolvedPath, dirent.name)
+      const isDirectory = dirent.isDirectory()
 
       // Check if file should be included (hidden files, exclude list, gitignore)
       if (
-        !this.shouldIncludeFile(dirent.name, fullPath, resolvedPath, showHidden)
+        !this.shouldIncludeFile(
+          dirent.name,
+          fullPath,
+          resolvedPath,
+          showHidden,
+          isDirectory,
+        )
       ) {
         return null
       }
@@ -114,7 +121,7 @@ export class FileSystemService {
         const entryStats = await stat(fullPath)
         const metadata = await this.getFileMetadata(fullPath, entryStats)
 
-        if (dirent.isDirectory()) {
+        if (isDirectory) {
           const dirEntry: DirectoryEntry = {
             name: dirent.name,
             path: fullPath,
@@ -355,6 +362,7 @@ export class FileSystemService {
     fullPath: string,
     baseDir: string,
     showHidden: boolean,
+    isDirectory = false,
   ): boolean {
     // Hidden files start with .
     if (name.startsWith('.') && !showHidden) {
@@ -362,7 +370,7 @@ export class FileSystemService {
     }
 
     // Check against gitignore rules
-    if (this.gitignoreManager.isIgnored(fullPath, baseDir)) {
+    if (this.gitignoreManager.isIgnored(fullPath, baseDir, isDirectory)) {
       return false
     }
 

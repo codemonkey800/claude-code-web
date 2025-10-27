@@ -99,9 +99,10 @@ export class GitignoreManager {
    *
    * @param filePath - Absolute path to the file or directory to check
    * @param baseDir - The directory that was used to load gitignores (usually the browsing directory)
+   * @param isDirectory - Whether the path is a directory (needed to match patterns with trailing slashes)
    * @returns True if the path should be ignored, false otherwise
    */
-  isIgnored(filePath: string, baseDir: string): boolean {
+  isIgnored(filePath: string, baseDir: string, isDirectory = false): boolean {
     const ig = this.ignoreCache.get(baseDir)
     if (!ig) {
       // No gitignore rules loaded for this directory
@@ -113,11 +114,17 @@ export class GitignoreManager {
 
     // Get the relative path from the base directory
     // The ignore library expects Unix-style paths with forward slashes
-    const relativePath = relative(baseDir, filePath).split(sep).join('/')
+    let relativePath = relative(baseDir, filePath).split(sep).join('/')
 
     if (!relativePath || relativePath === '.') {
       // Don't ignore the base directory itself
       return false
+    }
+
+    // Add trailing slash for directories to match gitignore patterns like "node_modules/"
+    // The ignore library requires this for proper directory matching
+    if (isDirectory && !relativePath.endsWith('/')) {
+      relativePath += '/'
     }
 
     const ignored = ig.ignores(relativePath)
