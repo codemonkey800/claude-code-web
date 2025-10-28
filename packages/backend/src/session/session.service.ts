@@ -2,10 +2,12 @@ import { randomUUID } from 'node:crypto'
 
 import {
   type CreateSessionPayload,
+  INTERNAL_EVENTS,
   type Session,
   SessionStatus,
 } from '@claude-code-web/shared'
 import { Injectable, Logger } from '@nestjs/common'
+import { EventEmitter2 } from '@nestjs/event-emitter'
 
 import { FileSystemService } from 'src/filesystem/filesystem.service'
 
@@ -18,7 +20,10 @@ export class SessionService {
   private readonly logger = new Logger(SessionService.name)
   private readonly sessions = new Map<string, Session>()
 
-  constructor(private readonly fileSystemService: FileSystemService) {}
+  constructor(
+    private readonly fileSystemService: FileSystemService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   /**
    * Creates a new session with the provided payload
@@ -102,9 +107,10 @@ export class SessionService {
 
   /**
    * Updates the status of a session
+   * Validates state transitions and emits events
    * @param id - The session ID to update
    * @param status - The new status
-   * @returns The updated session if found, null otherwise
+   * @returns The updated session if found and transition is valid, null otherwise
    */
   updateSessionStatus(id: string, status: SessionStatus): Session | null {
     const session = this.sessions.get(id)
@@ -114,11 +120,31 @@ export class SessionService {
       return null
     }
 
+    // Validate state transition
+    if (!this.canTransitionTo(session.status, status)) {
+      this.logger.warn(
+        `Invalid state transition for session ${id}: ${session.status} -> ${status}`,
+      )
+      return null
+    }
+
+    // Store old status for event emission
+    const oldStatus = session.status
+
+    // Update session
     session.status = status
     session.updatedAt = new Date()
     this.sessions.set(id, session)
 
-    this.logger.log(`Updated session ${id} status to: ${status}`)
+    this.logger.log(`Updated session ${id} status: ${oldStatus} -> ${status}`)
+
+    // Emit event for WebSocket broadcasting
+    this.eventEmitter.emit(INTERNAL_EVENTS.SESSION_STATUS_CHANGED, {
+      sessionId: id,
+      oldStatus,
+      newStatus: status,
+      session,
+    })
 
     return session
   }
@@ -146,5 +172,30 @@ export class SessionService {
    */
   getSessionCount(): number {
     return this.sessions.size
+  }
+
+  /**
+   * Validates whether a state transition is allowed
+   * @param from - Current session status
+   * @param to - Target session status
+   * @returns True if the transition is valid, false otherwise
+   */
+  private canTransitionTo(from: SessionStatus, to: SessionStatus): boolean {
+    // TERMINATED is a terminal state - no transitions allowed
+    if (from === SessionStatus.TERMINATED) {
+      return false
+    }
+
+    // Define valid transitions
+    switch (from) {
+      case SessionStatus.INITIALIZING:
+        // INITIALIZING can transition to ACTIVE or TERMINATED
+        return to === SessionStatus.ACTIVE || to === SessionStatus.TERMINATED
+      case SessionStatus.ACTIVE:
+        // ACTIVE can only transition to TERMINATED
+        return to === SessionStatus.TERMINATED
+      default:
+        return false
+    }
   }
 }

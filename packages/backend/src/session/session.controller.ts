@@ -1,5 +1,6 @@
 import {
   getErrorMessage,
+  INTERNAL_EVENTS,
   type Session,
   sessionsContract,
 } from '@claude-code-web/shared'
@@ -51,7 +52,7 @@ export class SessionController {
     operation: string,
     error: unknown,
   ): {
-    status: number
+    status: HttpStatus.INTERNAL_SERVER_ERROR
     body: {
       message: string
       error?: string
@@ -80,9 +81,7 @@ export class SessionController {
         try {
           this.logger.log('Creating new session via REST API')
 
-          const session = await Promise.resolve(
-            this.sessionService.createSession(body),
-          )
+          const session = await this.sessionService.createSession(body)
 
           return {
             status: HttpStatus.CREATED,
@@ -167,12 +166,6 @@ export class SessionController {
             }
           }
 
-          // Emit event for WebSocket broadcast
-          this.eventEmitter.emit('session.updated', {
-            sessionId: session.id,
-            session,
-          })
-
           return {
             status: HttpStatus.OK,
             body: this.serializeSession(session),
@@ -204,7 +197,7 @@ export class SessionController {
           }
 
           // Emit event for WebSocket broadcast
-          this.eventEmitter.emit('session.deleted', {
+          this.eventEmitter.emit(INTERNAL_EVENTS.SESSION_DELETED, {
             sessionId: params.id,
             reason: 'Deleted via REST API',
           })

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 
-import { SessionStatus } from '@claude-code-web/shared'
+import { INTERNAL_EVENTS, SessionStatus } from '@claude-code-web/shared'
+import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Test, TestingModule } from '@nestjs/testing'
 
 import { FileSystemService } from 'src/filesystem/filesystem.service'
@@ -14,6 +15,7 @@ jest.mock('node:crypto', () => ({
 
 describe('SessionService', () => {
   let service: SessionService
+  let mockEventEmitter: { emit: jest.Mock }
 
   beforeEach(async () => {
     const mockFileSystemService = {
@@ -26,12 +28,20 @@ describe('SessionService', () => {
       ),
     }
 
+    mockEventEmitter = {
+      emit: jest.fn(),
+    }
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SessionService,
         {
           provide: FileSystemService,
           useValue: mockFileSystemService,
+        },
+        {
+          provide: EventEmitter2,
+          useValue: mockEventEmitter,
         },
       ],
     }).compile()
@@ -200,7 +210,7 @@ describe('SessionService', () => {
   })
 
   describe('updateSessionStatus', () => {
-    it('should update session status successfully', async () => {
+    it('should update session status successfully for valid transitions', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
@@ -248,22 +258,137 @@ describe('SessionService', () => {
       expect(result).toBeNull()
     })
 
-    it('should handle all SessionStatus enum values', async () => {
+    it('should emit event on successful status update', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      await service.createSession({
+        workingDirectory: '/test/dir',
+      })
+
+      service.updateSessionStatus(mockUuid, SessionStatus.ACTIVE)
+
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        INTERNAL_EVENTS.SESSION_STATUS_CHANGED,
+        expect.objectContaining({
+          sessionId: mockUuid,
+          oldStatus: SessionStatus.INITIALIZING,
+          newStatus: SessionStatus.ACTIVE,
+          session: expect.objectContaining({
+            id: mockUuid,
+            status: SessionStatus.ACTIVE,
+          }) as unknown,
+        }),
+      )
+    })
+
+    it('should not emit event for invalid transitions', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
       await service.createSession({ workingDirectory: '/test/dir' })
+      service.updateSessionStatus(mockUuid, SessionStatus.TERMINATED)
 
-      const statuses = [
-        SessionStatus.INITIALIZING,
-        SessionStatus.ACTIVE,
-        SessionStatus.TERMINATED,
-      ]
+      mockEventEmitter.emit.mockClear()
 
-      for (const status of statuses) {
-        const updatedSession = service.updateSessionStatus(mockUuid, status)
-        expect(updatedSession?.status).toBe(status)
-      }
+      // Try to transition from TERMINATED (should fail)
+      const result = service.updateSessionStatus(mockUuid, SessionStatus.ACTIVE)
+
+      expect(result).toBeNull()
+      expect(mockEventEmitter.emit).not.toHaveBeenCalled()
+    })
+
+    describe('state transitions', () => {
+      it('should allow INITIALIZING -> ACTIVE', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        const result = service.updateSessionStatus(
+          mockUuid,
+          SessionStatus.ACTIVE,
+        )
+
+        expect(result).not.toBeNull()
+        expect(result?.status).toBe(SessionStatus.ACTIVE)
+      })
+
+      it('should allow INITIALIZING -> TERMINATED', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        const result = service.updateSessionStatus(
+          mockUuid,
+          SessionStatus.TERMINATED,
+        )
+
+        expect(result).not.toBeNull()
+        expect(result?.status).toBe(SessionStatus.TERMINATED)
+      })
+
+      it('should allow ACTIVE -> TERMINATED', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+        service.updateSessionStatus(mockUuid, SessionStatus.ACTIVE)
+
+        const result = service.updateSessionStatus(
+          mockUuid,
+          SessionStatus.TERMINATED,
+        )
+
+        expect(result).not.toBeNull()
+        expect(result?.status).toBe(SessionStatus.TERMINATED)
+      })
+
+      it('should reject TERMINATED -> ACTIVE', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+        service.updateSessionStatus(mockUuid, SessionStatus.TERMINATED)
+
+        const result = service.updateSessionStatus(
+          mockUuid,
+          SessionStatus.ACTIVE,
+        )
+
+        expect(result).toBeNull()
+      })
+
+      it('should reject TERMINATED -> INITIALIZING', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+        service.updateSessionStatus(mockUuid, SessionStatus.TERMINATED)
+
+        const result = service.updateSessionStatus(
+          mockUuid,
+          SessionStatus.INITIALIZING,
+        )
+
+        expect(result).toBeNull()
+      })
+
+      it('should reject ACTIVE -> INITIALIZING', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+        service.updateSessionStatus(mockUuid, SessionStatus.ACTIVE)
+
+        const result = service.updateSessionStatus(
+          mockUuid,
+          SessionStatus.INITIALIZING,
+        )
+
+        expect(result).toBeNull()
+      })
     })
   })
 

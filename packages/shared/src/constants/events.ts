@@ -62,6 +62,25 @@ export const ERROR_CODES = {
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES]
 
 /**
+ * Internal backend EventEmitter2 event names
+ * Used for server-side event communication between modules
+ */
+export const INTERNAL_EVENTS = {
+  /** Emitted when a session is updated via REST API */
+  SESSION_UPDATED: 'session.updated',
+  /** Emitted when a session is deleted */
+  SESSION_DELETED: 'session.deleted',
+  /** Emitted when a session status transitions to a new state */
+  SESSION_STATUS_CHANGED: 'session.status.changed',
+} as const
+
+/**
+ * Type-safe union of all possible internal event types
+ */
+export type InternalEventType =
+  (typeof INTERNAL_EVENTS)[keyof typeof INTERNAL_EVENTS]
+
+/**
  * System-wide configuration constants
  * All time values are in milliseconds
  */

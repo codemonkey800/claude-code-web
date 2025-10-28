@@ -146,12 +146,14 @@ Enhance the existing session management system with:
   - Updated frontend SessionTester component status colors ✓
   - All tests passing, linting and type-checking passed ✓
 
-- [ ] **Update SessionService state machine**
-  - Implement `canTransitionTo(from, to)` validation
-  - Add `transitionState(id, newState)` method
-  - Emit specific events for each transition
-  - Add state history tracking
-  - Include transition timestamps
+- [x] **Update SessionService state machine** (2025-10-27 15:45)
+  - Implement `canTransitionTo(from, to)` validation ✓
+  - ~~Add `transitionState(id, newState)` method~~ (Used existing `updateSessionStatus` method)
+  - Emit specific events for each transition ✓ (SESSION_STATUS_CHANGED)
+  - ~~Add state history tracking~~ (Deferred - not needed for Phase 2)
+  - Include transition timestamps ✓ (updatedAt field)
+  - Added comprehensive state transition tests ✓
+  - Validates all transitions before applying ✓
 
 - [ ] **Add session lifecycle methods**
   - Enhance `createSession()` to set INITIALIZING (✓ Already done)
@@ -491,15 +493,65 @@ Enhance the existing session management system with:
 
 ### Implementation Notes:
 
-<!-- Add notes about implementation decisions, challenges, and solutions -->
+**2025-10-27 15:45 - Session State Machine Implementation**
+
+- Implemented complete state machine validation in `SessionService.updateSessionStatus()`
+- Added private `canTransitionTo()` method enforcing these rules:
+  - `INITIALIZING` → `ACTIVE` or `TERMINATED` ✅
+  - `ACTIVE` → `TERMINATED` ✅
+  - `TERMINATED` → (no transitions - terminal state) ❌
+  - `ACTIVE` → `INITIALIZING` ❌
+- EventEmitter2 integration: Emits `SESSION_STATUS_CHANGED` event with:
+  - `sessionId`, `oldStatus`, `newStatus`, `session` (full object)
+- WebSocket Gateway: Added `handleSessionStatusChanged()` listener
+  - Broadcasts status transitions to session room clients
+  - Event type: `WS_EVENTS.SESSION_STATUS`
+- Added `INTERNAL_EVENTS` constants in shared package for type-safe event names
+- Refactored event emission from controller to service layer (separation of concerns)
+- Comprehensive test coverage: 6 state transition tests + event emission tests
+- Tests verify invalid transitions return `null` and don't emit events
 
 ### Deviations from Plan:
 
-<!-- Document any changes from the original plan and reasoning -->
+**Section 2.1 - Session State Machine (2025-10-27)**
+
+- **Deferred**: State history tracking
+  - Reason: Not needed for Phase 2 core functionality
+  - Can be added later if session audit trail is needed
+
+- **Changed**: No separate `transitionState()` method
+  - Reason: Existing `updateSessionStatus()` method handles this well
+  - State validation integrated into existing method
+  - Simpler API surface
+
+- **Enhanced**: Added comprehensive test coverage beyond plan
+  - 6 specific state transition tests
+  - Event emission verification
+  - Invalid transition rejection tests
 
 ### Key Decisions:
 
-<!-- Document important architectural or implementation decisions -->
+**State Machine Architecture (2025-10-27)**
+
+1. **Service Layer Event Emission**: Moved event emission from controller to service
+   - Rationale: Service layer has full context of state transitions
+   - Benefit: Single source of truth for all status changes (REST + future internal transitions)
+   - Controller no longer emits `session.updated` - service handles all events
+
+2. **Type-Safe Event Constants**: Created `INTERNAL_EVENTS` object in shared package
+   - Prevents typos in event names
+   - Enables refactoring with TypeScript support
+   - Clear separation between internal backend events and WebSocket client events
+
+3. **Simplified State Machine**: Using existing `updateSessionStatus()` method
+   - No need for separate `transitionState()` method
+   - Validation integrated into existing API
+   - Backwards compatible with current controller implementation
+
+4. **Terminal State Pattern**: `TERMINATED` is truly terminal
+   - Once terminated, no transitions allowed
+   - Prevents resurrection of dead sessions
+   - Clean lifecycle management
 
 ### Performance Observations:
 

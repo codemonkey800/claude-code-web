@@ -62,7 +62,11 @@ export class FileSystemController {
     operation: string,
     error: unknown,
   ): {
-    status: number
+    status:
+      | HttpStatus.INTERNAL_SERVER_ERROR
+      | HttpStatus.NOT_FOUND
+      | HttpStatus.FORBIDDEN
+      | HttpStatus.BAD_REQUEST
     body: {
       message: string
       error?: string

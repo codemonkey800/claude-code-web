@@ -1,6 +1,7 @@
 import type { IncomingHttpHeaders } from 'node:http'
 
 import {
+  INTERNAL_EVENTS,
   type Session,
   type SessionMetadata,
   SessionStatus,
@@ -347,26 +348,6 @@ describe('SessionController', () => {
       }
     })
 
-    it("should emit 'session.updated' event with correct payload", async () => {
-      const mockSession = createMockSession({ status: SessionStatus.ACTIVE })
-      sessionService.updateSessionStatus.mockReturnValue(mockSession)
-
-      const handlerInstance = controller.handler()
-      await handlerInstance.updateSessionStatus({
-        params: { id: mockSession.id },
-        headers: mockHeaders,
-        body: { status: SessionStatus.ACTIVE },
-      })
-
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(eventEmitter.emit).toHaveBeenCalledWith('session.updated', {
-        sessionId: mockSession.id,
-        session: mockSession,
-      })
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(eventEmitter.emit).toHaveBeenCalledTimes(1)
-    })
-
     it('should handle errors and return 500 status', async () => {
       sessionService.updateSessionStatus.mockImplementation(() => {
         throw new Error('Database error')
@@ -470,10 +451,13 @@ describe('SessionController', () => {
       })
 
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(eventEmitter.emit).toHaveBeenCalledWith('session.deleted', {
-        sessionId,
-        reason: 'Deleted via REST API',
-      })
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        INTERNAL_EVENTS.SESSION_DELETED,
+        {
+          sessionId,
+          reason: 'Deleted via REST API',
+        },
+      )
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(eventEmitter.emit).toHaveBeenCalledTimes(1)
     })
