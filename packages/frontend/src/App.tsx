@@ -1,7 +1,7 @@
 import * as Toast from '@radix-ui/react-toast'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { queryClient } from 'src/api/queryClient'
 import { ChatLayout } from 'src/components/ChatLayout/ChatLayout'
@@ -9,14 +9,23 @@ import { ConnectionStatusToast } from 'src/components/ConnectionStatusToast'
 import { LandingPage } from 'src/components/LandingPage'
 import { ApiProvider } from 'src/context/ApiContext'
 import { SocketProvider } from 'src/context/SocketContext'
+import { useRecents } from 'src/hooks/useRecents'
 import { useSocket } from 'src/hooks/useSocket'
 import { ConnectionStatus } from 'src/types/socket'
 
 function AppContent() {
-  const { connectionStatus } = useSocket()
+  const { connectionStatus, serverUrl } = useSocket()
+  const { recents, addRecent, removeRecent } = useRecents()
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
 
   const isConnected = connectionStatus === ConnectionStatus.CONNECTED
+
+  // Save to recents when successfully connected
+  useEffect(() => {
+    if (connectionStatus === ConnectionStatus.CONNECTED && serverUrl) {
+      addRecent(serverUrl)
+    }
+  }, [connectionStatus, serverUrl, addRecent])
 
   return (
     <>
@@ -26,7 +35,7 @@ function AppContent() {
           onSessionChange={setActiveSessionId}
         />
       ) : (
-        <LandingPage />
+        <LandingPage recents={recents} onRemoveRecent={removeRecent} />
       )}
     </>
   )

@@ -1,13 +1,22 @@
-import { Loader2 } from 'lucide-react'
+import { Clock, Loader2, X } from 'lucide-react'
+import type React from 'react'
 import { type FormEvent, useState } from 'react'
 
 import { useSocket } from 'src/hooks/useSocket'
 import { ConnectionStatus } from 'src/types/socket'
 
-export function LandingPage() {
+import type { RecentConnection } from 'src/hooks/useRecents'
+
+interface LandingPageProps {
+  recents: RecentConnection[]
+  onRemoveRecent: (url: string) => void
+}
+
+export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
   const { connectionStatus, error, connect } = useSocket()
   const [serverUrl, setServerUrl] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
+  const [deletingUrl, setDeletingUrl] = useState<string | null>(null)
 
   const isConnecting = connectionStatus === ConnectionStatus.CONNECTING
   const hasError = connectionStatus === ConnectionStatus.ERROR
@@ -33,6 +42,26 @@ export function LandingPage() {
     void connect(serverUrl)
   }
 
+  const handleRecentClick = (url: string): void => {
+    setLocalError(null)
+    setServerUrl(url)
+    // Automatically connect to the server
+    void connect(url)
+  }
+
+  const handleDeleteRecent = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    url: string,
+  ): void => {
+    e.stopPropagation() // Prevent triggering the parent click handler
+    setDeletingUrl(url)
+    // Wait for animation to complete before removing
+    setTimeout(() => {
+      onRemoveRecent(url)
+      setDeletingUrl(null)
+    }, 300)
+  }
+
   const displayError = localError || error
 
   return (
@@ -47,6 +76,55 @@ export function LandingPage() {
             Connect to your server
           </p>
         </div>
+
+        {/* Recent Connections */}
+        {recents.length > 0 && (
+          <div className="animate-fade-in-up mb-6">
+            <div className="mb-3 flex items-center gap-2 text-white/90">
+              <Clock className="h-4 w-4" />
+              <h2 className="text-sm font-medium">Recent Connections</h2>
+            </div>
+            <div className="space-y-2">
+              {recents.map((recent, index) => (
+                <div
+                  key={recent.url}
+                  className={`group flex items-center justify-between gap-3 rounded-lg border border-white/40 bg-white/80 px-4 py-3 shadow-lg shadow-blue-500/10 backdrop-blur-xl transition-all duration-300 hover:scale-[1.02] hover:border-white/60 hover:bg-white/90 hover:shadow-xl hover:shadow-blue-500/20 cursor-pointer animate-slide-in-left ${
+                    deletingUrl === recent.url ? 'animate-fade-out' : ''
+                  }`}
+                  style={{
+                    animationDelay: `${index * 50}ms`,
+                  }}
+                  onClick={() => handleRecentClick(recent.url)}
+                >
+                  <div className="flex-1 overflow-hidden">
+                    <p className="truncate text-sm font-medium text-gray-700">
+                      {recent.url}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(recent.timestamp).toLocaleDateString(
+                        undefined,
+                        {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        },
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    onClick={e => handleDeleteRecent(e, recent.url)}
+                    className="flex-shrink-0 rounded p-1 text-gray-400 opacity-0 transition-all duration-200 hover:bg-red-100 hover:text-red-600 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    aria-label={`Delete ${recent.url}`}
+                    type="button"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Connection Form */}
         <div className="animate-fade-in-up rounded-lg border border-white/40 bg-white/80 p-8 shadow-xl shadow-blue-500/10 backdrop-blur-xl">
