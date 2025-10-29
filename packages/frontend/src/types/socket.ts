@@ -24,4 +24,7 @@ export interface SocketContextState {
   error: string | null
   isConnected: boolean
   reconnectAttempt: number
+  serverUrl: string | null
+  connect: (serverUrl: string) => void
+  disconnect: () => void
 }
