@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 
-import { INTERNAL_EVENTS, SessionStatus } from '@claude-code-web/shared'
+import { INTERNAL_EVENTS, SessionStatus, sleep } from '@claude-code-web/shared'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Test, TestingModule } from '@nestjs/testing'
 
@@ -235,7 +235,7 @@ describe('SessionService', () => {
       const originalUpdatedAt = session.updatedAt
 
       // Wait a bit to ensure timestamp difference
-      await new Promise(resolve => setTimeout(resolve, 10))
+      await sleep(10)
 
       const updatedSession = service.updateSessionStatus(
         mockUuid,
@@ -392,14 +392,340 @@ describe('SessionService', () => {
     })
   })
 
-  describe('deleteSession', () => {
-    it('should delete existing session and return true', async () => {
+  describe('startSession', () => {
+    it('should successfully transition INITIALIZING -> ACTIVE', async () => {
       const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
       ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
 
       await service.createSession({ workingDirectory: '/test/dir' })
 
-      const result = service.deleteSession(mockUuid)
+      const result = await service.startSession(mockUuid)
+
+      expect(result.status).toBe(SessionStatus.ACTIVE)
+      expect(result.id).toBe(mockUuid)
+    })
+
+    it('should update updatedAt timestamp', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      const session = await service.createSession({
+        workingDirectory: '/test/dir',
+      })
+      const originalUpdatedAt = session.updatedAt
+
+      // Wait a bit to ensure timestamp difference
+      await sleep(10)
+
+      const result = await service.startSession(mockUuid)
+
+      expect(result.updatedAt.getTime()).toBeGreaterThan(
+        originalUpdatedAt.getTime(),
+      )
+    })
+
+    it('should throw error if session not found', async () => {
+      const nonExistentId = '550e8400-e29b-41d4-a716-446655440099'
+
+      await expect(service.startSession(nonExistentId)).rejects.toThrow(
+        'Cannot start session - session not found',
+      )
+    })
+
+    it('should throw error if session is already ACTIVE', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      await service.createSession({ workingDirectory: '/test/dir' })
+      await service.startSession(mockUuid)
+
+      await expect(service.startSession(mockUuid)).rejects.toThrow(
+        'must be in INITIALIZING state',
+      )
+    })
+
+    it('should throw error if session is TERMINATED', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      await service.createSession({ workingDirectory: '/test/dir' })
+      service.updateSessionStatus(mockUuid, SessionStatus.TERMINATED)
+
+      await expect(service.startSession(mockUuid)).rejects.toThrow(
+        'must be in INITIALIZING state',
+      )
+    })
+
+    it('should emit SESSION_STATUS_CHANGED event on success', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      await service.createSession({ workingDirectory: '/test/dir' })
+
+      await service.startSession(mockUuid)
+
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        INTERNAL_EVENTS.SESSION_STATUS_CHANGED,
+        expect.objectContaining({
+          sessionId: mockUuid,
+          oldStatus: SessionStatus.INITIALIZING,
+          newStatus: SessionStatus.ACTIVE,
+        }),
+      )
+    })
+
+    describe('error handling', () => {
+      it('should transition to TERMINATED when initialization fails', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        // Mock updateSessionStatus to simulate initialization failure
+        const originalUpdateStatus = service.updateSessionStatus.bind(service)
+        let callCount = 0
+        jest
+          .spyOn(service, 'updateSessionStatus')
+          .mockImplementation((id, status) => {
+            callCount++
+            // First call tries to set ACTIVE but we'll make it fail
+            if (callCount === 1) {
+              return null // Simulate failure
+            }
+            // Second call sets TERMINATED (error recovery)
+            return originalUpdateStatus(id, status)
+          })
+
+        await expect(service.startSession(mockUuid)).rejects.toThrow(
+          'Failed to transition session to ACTIVE',
+        )
+
+        // Verify session is in TERMINATED state after error
+        const session = service.getSession(mockUuid)
+        expect(session?.status).toBe(SessionStatus.TERMINATED)
+      })
+
+      it('should emit SESSION_STATUS_CHANGED to TERMINATED on failure', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        // Mock updateSessionStatus to fail on first call (ACTIVE), succeed on second (TERMINATED)
+        const originalUpdateStatus = service.updateSessionStatus.bind(service)
+        let callCount = 0
+        jest
+          .spyOn(service, 'updateSessionStatus')
+          .mockImplementation((id, status) => {
+            callCount++
+            if (callCount === 1) {
+              return null
+            }
+            return originalUpdateStatus(id, status)
+          })
+
+        mockEventEmitter.emit.mockClear()
+
+        try {
+          await service.startSession(mockUuid)
+        } catch {
+          // Expected to throw
+        }
+
+        // Should have emitted status change to TERMINATED
+        expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+          INTERNAL_EVENTS.SESSION_STATUS_CHANGED,
+          expect.objectContaining({
+            sessionId: mockUuid,
+            oldStatus: SessionStatus.INITIALIZING,
+            newStatus: SessionStatus.TERMINATED,
+          }),
+        )
+      })
+
+      it('should re-throw error after transitioning to TERMINATED', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        // Mock updateSessionStatus to fail
+        jest.spyOn(service, 'updateSessionStatus').mockReturnValue(null)
+
+        await expect(service.startSession(mockUuid)).rejects.toThrow()
+      })
+    })
+  })
+
+  describe('stopSession', () => {
+    it('should successfully transition INITIALIZING -> TERMINATED', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      await service.createSession({ workingDirectory: '/test/dir' })
+
+      const result = await service.stopSession(mockUuid)
+
+      expect(result.status).toBe(SessionStatus.TERMINATED)
+      expect(result.id).toBe(mockUuid)
+    })
+
+    it('should successfully transition ACTIVE -> TERMINATED', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      await service.createSession({ workingDirectory: '/test/dir' })
+      await service.startSession(mockUuid)
+
+      const result = await service.stopSession(mockUuid)
+
+      expect(result.status).toBe(SessionStatus.TERMINATED)
+      expect(result.id).toBe(mockUuid)
+    })
+
+    it('should return session if already TERMINATED (idempotent)', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      await service.createSession({ workingDirectory: '/test/dir' })
+      await service.stopSession(mockUuid)
+
+      mockEventEmitter.emit.mockClear()
+
+      const result = await service.stopSession(mockUuid)
+
+      expect(result.status).toBe(SessionStatus.TERMINATED)
+      // Should not emit event on second call (idempotent)
+      expect(mockEventEmitter.emit).not.toHaveBeenCalled()
+    })
+
+    it('should update updatedAt timestamp when transitioning', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      const session = await service.createSession({
+        workingDirectory: '/test/dir',
+      })
+      const originalUpdatedAt = session.updatedAt
+
+      // Wait a bit to ensure timestamp difference
+      await sleep(10)
+
+      const result = await service.stopSession(mockUuid)
+
+      expect(result.updatedAt.getTime()).toBeGreaterThan(
+        originalUpdatedAt.getTime(),
+      )
+    })
+
+    it('should throw error if session not found', async () => {
+      const nonExistentId = '550e8400-e29b-41d4-a716-446655440099'
+
+      await expect(service.stopSession(nonExistentId)).rejects.toThrow(
+        'Cannot stop session - session not found',
+      )
+    })
+
+    it('should emit SESSION_STATUS_CHANGED event when transitioning', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      await service.createSession({ workingDirectory: '/test/dir' })
+
+      await service.stopSession(mockUuid)
+
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        INTERNAL_EVENTS.SESSION_STATUS_CHANGED,
+        expect.objectContaining({
+          sessionId: mockUuid,
+          oldStatus: SessionStatus.INITIALIZING,
+          newStatus: SessionStatus.TERMINATED,
+        }),
+      )
+    })
+
+    describe('error handling', () => {
+      it('should force transition to TERMINATED when shutdown fails', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        // Mock updateSessionStatus to fail on first call, succeed on second
+        const originalUpdateStatus = service.updateSessionStatus.bind(service)
+        let callCount = 0
+        jest
+          .spyOn(service, 'updateSessionStatus')
+          .mockImplementation((id, status) => {
+            callCount++
+            // First call fails (simulating error during shutdown)
+            if (callCount === 1) {
+              return null
+            }
+            // Second call succeeds (forced termination)
+            return originalUpdateStatus(id, status)
+          })
+
+        const result = await service.stopSession(mockUuid)
+
+        expect(result.status).toBe(SessionStatus.TERMINATED)
+        expect(result.id).toBe(mockUuid)
+      })
+
+      it('should return session after forced termination on error', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        // Mock to fail first, succeed second
+        const originalUpdateStatus = service.updateSessionStatus.bind(service)
+        let callCount = 0
+        jest
+          .spyOn(service, 'updateSessionStatus')
+          .mockImplementation((id, status) => {
+            callCount++
+            if (callCount === 1) {
+              return null
+            }
+            return originalUpdateStatus(id, status)
+          })
+
+        const result = await service.stopSession(mockUuid)
+
+        // Should return successfully even after error
+        expect(result).toBeDefined()
+        expect(result.status).toBe(SessionStatus.TERMINATED)
+
+        // Verify session is actually terminated
+        const session = service.getSession(mockUuid)
+        expect(session?.status).toBe(SessionStatus.TERMINATED)
+      })
+
+      it('should throw error if forced termination also fails', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        // Mock updateSessionStatus to always fail
+        jest.spyOn(service, 'updateSessionStatus').mockReturnValue(null)
+
+        await expect(service.stopSession(mockUuid)).rejects.toThrow(
+          'Failed to transition session to TERMINATED',
+        )
+      })
+    })
+  })
+
+  describe('deleteSession', () => {
+    it('should stop and delete INITIALIZING session', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      await service.createSession({ workingDirectory: '/test/dir' })
+
+      const result = await service.deleteSession(mockUuid)
 
       expect(result).toBe(true)
 
@@ -408,9 +734,66 @@ describe('SessionService', () => {
       expect(session).toBeNull()
     })
 
-    it('should return false for non-existent session', () => {
+    it('should stop and delete ACTIVE session', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      await service.createSession({ workingDirectory: '/test/dir' })
+      await service.startSession(mockUuid)
+
+      const result = await service.deleteSession(mockUuid)
+
+      expect(result).toBe(true)
+
+      // Verify session is actually deleted
+      const session = service.getSession(mockUuid)
+      expect(session).toBeNull()
+    })
+
+    it('should directly delete TERMINATED session without calling stopSession', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      await service.createSession({ workingDirectory: '/test/dir' })
+      await service.stopSession(mockUuid)
+
+      // Clear previous event emissions
+      mockEventEmitter.emit.mockClear()
+
+      const result = await service.deleteSession(mockUuid)
+
+      expect(result).toBe(true)
+      // Should only emit SESSION_DELETED, not SESSION_STATUS_CHANGED
+      expect(mockEventEmitter.emit).toHaveBeenCalledTimes(1)
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        INTERNAL_EVENTS.SESSION_DELETED,
+        {
+          sessionId: mockUuid,
+          reason: 'Deleted via REST API',
+        },
+      )
+    })
+
+    it('should emit SESSION_DELETED event from service', async () => {
+      const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+      ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+      await service.createSession({ workingDirectory: '/test/dir' })
+
+      await service.deleteSession(mockUuid)
+
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        INTERNAL_EVENTS.SESSION_DELETED,
+        {
+          sessionId: mockUuid,
+          reason: 'Deleted via REST API',
+        },
+      )
+    })
+
+    it('should return false for non-existent session', async () => {
       const nonExistentId = '550e8400-e29b-41d4-a716-446655440099'
-      const result = service.deleteSession(nonExistentId)
+      const result = await service.deleteSession(nonExistentId)
 
       expect(result).toBe(false)
     })
@@ -427,7 +810,7 @@ describe('SessionService', () => {
 
       const countBefore = service.getSessionCount()
 
-      service.deleteSession(mockUuid1)
+      await service.deleteSession(mockUuid1)
 
       expect(service.getSessionCount()).toBe(countBefore - 1)
     })
@@ -472,10 +855,10 @@ describe('SessionService', () => {
       await service.createSession({ workingDirectory: '/test/dir2' })
       expect(service.getSessionCount()).toBe(2)
 
-      service.deleteSession(mockUuid1)
+      await service.deleteSession(mockUuid1)
       expect(service.getSessionCount()).toBe(1)
 
-      service.deleteSession(mockUuid2)
+      await service.deleteSession(mockUuid2)
       expect(service.getSessionCount()).toBe(0)
     })
   })

@@ -1,11 +1,9 @@
 import {
   getErrorMessage,
-  INTERNAL_EVENTS,
   type Session,
   sessionsContract,
 } from '@claude-code-web/shared'
 import { Controller, HttpStatus, Logger } from '@nestjs/common'
-import { EventEmitter2 } from '@nestjs/event-emitter'
 import { TsRestHandler, tsRestHandler } from '@ts-rest/nest'
 
 import { SessionService } from './session.service'
@@ -18,10 +16,7 @@ import { SessionService } from './session.service'
 export class SessionController {
   private readonly logger = new Logger(SessionController.name)
 
-  constructor(
-    private readonly sessionService: SessionService,
-    private readonly eventEmitter: EventEmitter2,
-  ) {}
+  constructor(private readonly sessionService: SessionService) {}
 
   /**
    * Serializes a session by converting Date objects to ISO strings
@@ -183,9 +178,8 @@ export class SessionController {
         try {
           this.logger.log(`Deleting session ${params.id} via REST API`)
 
-          const deleted = await Promise.resolve(
-            this.sessionService.deleteSession(params.id),
-          )
+          // Service now handles stopping and event emission
+          const deleted = await this.sessionService.deleteSession(params.id)
 
           if (!deleted) {
             return {
@@ -195,12 +189,6 @@ export class SessionController {
               },
             }
           }
-
-          // Emit event for WebSocket broadcast
-          this.eventEmitter.emit(INTERNAL_EVENTS.SESSION_DELETED, {
-            sessionId: params.id,
-            reason: 'Deleted via REST API',
-          })
 
           return {
             status: HttpStatus.NO_CONTENT,

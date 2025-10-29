@@ -2,9 +2,11 @@ import { randomUUID } from 'node:crypto'
 
 import {
   type CreateSessionPayload,
+  getErrorMessage,
   INTERNAL_EVENTS,
   type Session,
   SessionStatus,
+  sleep,
 } from '@claude-code-web/shared'
 import { Injectable, Logger } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
@@ -151,16 +153,36 @@ export class SessionService {
 
   /**
    * Deletes a session by its ID
+   * Automatically stops the session if it's ACTIVE or INITIALIZING
    * @param id - The session ID to delete
    * @returns True if the session was deleted, false if not found
    */
-  deleteSession(id: string): boolean {
+  async deleteSession(id: string): Promise<boolean> {
+    const session = this.sessions.get(id)
+
+    if (!session) {
+      this.logger.warn(`Cannot delete - session not found: ${id}`)
+      return false
+    }
+
+    // If session is not terminated, stop it first
+    if (session.status !== SessionStatus.TERMINATED) {
+      this.logger.log(
+        `Stopping ${session.status} session before deletion: ${id}`,
+      )
+      await this.stopSession(id)
+    }
+
+    // Now safe to delete
     const existed = this.sessions.delete(id)
 
     if (existed) {
       this.logger.log(`Deleted session: ${id}`)
-    } else {
-      this.logger.warn(`Cannot delete - session not found: ${id}`)
+      // Emit event for WebSocket broadcast
+      this.eventEmitter.emit(INTERNAL_EVENTS.SESSION_DELETED, {
+        sessionId: id,
+        reason: 'Deleted via REST API',
+      })
     }
 
     return existed
@@ -172,6 +194,105 @@ export class SessionService {
    */
   getSessionCount(): number {
     return this.sessions.size
+  }
+
+  /**
+   * Starts a session by transitioning from INITIALIZING to ACTIVE
+   * Prepares for future Claude Code SDK initialization
+   * @param id - The session ID to start
+   * @returns The updated session with ACTIVE status
+   * @throws {Error} if session not found, not in INITIALIZING state, or initialization fails
+   */
+  async startSession(id: string): Promise<Session> {
+    const session = this.getSession(id)
+
+    if (!session) {
+      const error = `Cannot start session - session not found: ${id}`
+      this.logger.error(error)
+      throw new Error(error)
+    }
+
+    if (session.status !== SessionStatus.INITIALIZING) {
+      const error = `Cannot start session ${id} - must be in INITIALIZING state, got: ${session.status}`
+      this.logger.error(error)
+      throw new Error(error)
+    }
+
+    try {
+      // TODO: Initialize Claude Code SDK here when integrated
+      // await this.claudeCodeService.initialize(session.workingDirectory)
+      await sleep(1000) // Placeholder for async SDK initialization
+
+      // Transition to ACTIVE
+      const updated = this.updateSessionStatus(id, SessionStatus.ACTIVE)
+
+      if (!updated) {
+        throw new Error('Failed to transition session to ACTIVE')
+      }
+
+      this.logger.log(`Started session ${id}`)
+      return updated
+    } catch (error) {
+      this.logger.error(
+        `Failed to start session ${id}, transitioning to TERMINATED`,
+        error,
+      )
+      // On failure, transition to TERMINATED
+      this.updateSessionStatus(id, SessionStatus.TERMINATED)
+      throw error
+    }
+  }
+
+  /**
+   * Stops a session by transitioning to TERMINATED
+   * Gracefully shuts down Claude Code SDK (when integrated)
+   * @param id - The session ID to stop
+   * @returns The updated session with TERMINATED status
+   * @throws {Error} if session not found
+   */
+  async stopSession(id: string): Promise<Session> {
+    const session = this.getSession(id)
+
+    if (!session) {
+      const error = `Cannot stop session - session not found: ${id}`
+      this.logger.error(error)
+      throw new Error(error)
+    }
+
+    // If already terminated, return as-is (idempotent)
+    if (session.status === SessionStatus.TERMINATED) {
+      this.logger.debug(`Session ${id} already terminated`)
+      return session
+    }
+
+    try {
+      // TODO: Gracefully shut down Claude Code SDK here when integrated
+      // await this.claudeCodeService.shutdown(id)
+      await sleep(1000) // Placeholder for async SDK cleanup
+
+      // Transition to TERMINATED
+      const updated = this.updateSessionStatus(id, SessionStatus.TERMINATED)
+
+      if (!updated) {
+        throw new Error('Failed to transition session to TERMINATED')
+      }
+
+      this.logger.log(`Stopped session ${id}`)
+      return updated
+    } catch (error) {
+      this.logger.error(
+        `Error stopping session ${id}, forcing termination`,
+        error,
+      )
+      // Force transition to TERMINATED even on error
+      const updated = this.updateSessionStatus(id, SessionStatus.TERMINATED)
+      if (!updated) {
+        throw new Error(
+          `Failed to force terminate session ${id} after error: ${getErrorMessage(error)}`,
+        )
+      }
+      return updated
+    }
   }
 
   /**

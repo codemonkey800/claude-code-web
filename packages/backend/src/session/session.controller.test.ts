@@ -1,12 +1,10 @@
 import type { IncomingHttpHeaders } from 'node:http'
 
 import {
-  INTERNAL_EVENTS,
   type Session,
   type SessionMetadata,
   SessionStatus,
 } from '@claude-code-web/shared'
-import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Test, TestingModule } from '@nestjs/testing'
 
 import { SessionController } from './session.controller'
@@ -55,7 +53,6 @@ type DeleteSessionResponse =
 describe('SessionController', () => {
   let controller: SessionController
   let sessionService: jest.Mocked<SessionService>
-  let eventEmitter: jest.Mocked<EventEmitter2>
 
   // Mock headers for requests
   const mockHeaders: IncomingHttpHeaders = {}
@@ -80,10 +77,6 @@ describe('SessionController', () => {
       getSessionCount: jest.fn(),
     }
 
-    const mockEventEmitter = {
-      emit: jest.fn(),
-    }
-
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SessionController],
       providers: [
@@ -91,16 +84,11 @@ describe('SessionController', () => {
           provide: SessionService,
           useValue: mockSessionService,
         },
-        {
-          provide: EventEmitter2,
-          useValue: mockEventEmitter,
-        },
       ],
     }).compile()
 
     controller = module.get<SessionController>(SessionController)
     sessionService = module.get(SessionService)
-    eventEmitter = module.get(EventEmitter2)
 
     jest.clearAllMocks()
   })
@@ -402,7 +390,7 @@ describe('SessionController', () => {
 
   describe('deleteSession endpoint', () => {
     it('should delete session and return 204 status', async () => {
-      sessionService.deleteSession.mockReturnValue(true)
+      sessionService.deleteSession.mockResolvedValue(true)
 
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.deleteSession({
@@ -422,7 +410,7 @@ describe('SessionController', () => {
     })
 
     it('should return 404 when session not found', async () => {
-      sessionService.deleteSession.mockReturnValue(false)
+      sessionService.deleteSession.mockResolvedValue(false)
 
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.deleteSession({
@@ -439,33 +427,10 @@ describe('SessionController', () => {
       }
     })
 
-    it("should emit 'session.deleted' event with correct payload", async () => {
-      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
-      sessionService.deleteSession.mockReturnValue(true)
-
-      const handlerInstance = controller.handler()
-      await handlerInstance.deleteSession({
-        params: { id: sessionId },
-        headers: mockHeaders,
-        body: null,
-      })
-
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
-        INTERNAL_EVENTS.SESSION_DELETED,
-        {
-          sessionId,
-          reason: 'Deleted via REST API',
-        },
-      )
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(eventEmitter.emit).toHaveBeenCalledTimes(1)
-    })
-
     it('should handle errors and return 500 status', async () => {
-      sessionService.deleteSession.mockImplementation(() => {
-        throw new Error('Database error')
-      })
+      sessionService.deleteSession.mockRejectedValue(
+        new Error('Database error'),
+      )
 
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.deleteSession({

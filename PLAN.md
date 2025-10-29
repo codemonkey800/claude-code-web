@@ -155,12 +155,14 @@ Enhance the existing session management system with:
   - Added comprehensive state transition tests ✓
   - Validates all transitions before applying ✓
 
-- [ ] **Add session lifecycle methods**
-  - Enhance `createSession()` to set INITIALIZING (✓ Already done)
-  - Add `initializeSession(id)` for Claude Code setup
-  - Add `startSession(id)` to transition to ACTIVE
-  - Add `stopSession(id)` to transition to TERMINATED
-  - Update `deleteSession()` to handle active sessions
+- [x] **Add session lifecycle methods** (2025-10-28 16:30)
+  - Enhance `createSession()` to set INITIALIZING ✓
+  - Add `startSession(id)` to transition INITIALIZING → ACTIVE ✓
+  - Add `stopSession(id)` to gracefully transition to TERMINATED ✓
+  - Update `deleteSession()` to async and auto-stop active sessions ✓
+  - SESSION_DELETED event now emitted from service layer ✓
+  - Added comprehensive tests for all lifecycle methods ✓
+  - Added sleep() placeholders for async operations ✓
 
 ### 2.2 Session Metadata Enhancement
 
