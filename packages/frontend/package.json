@@ -25,11 +25,13 @@
     "@radix-ui/react-toast": "^1.2.15",
     "@tanstack/react-query": "^5.90.5",
     "@tanstack/react-query-devtools": "^5.90.2",
+    "clsx": "^2.1.1",
     "lucide-react": "^0.547.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.9.4",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
     "@claude-code-web/eslint-config": "workspace:*",
