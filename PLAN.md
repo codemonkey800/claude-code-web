@@ -180,14 +180,32 @@ Enhance the existing session management system with:
 
 ### 2.3 Session Persistence Preparation
 
-- [ ] **Create session snapshot interface**
+> **⏭️ DEFERRED TO FUTURE PHASE**
+>
+> Session persistence is being deferred to a later phase (likely Phase 3 or Phase 4) to focus on core real-time functionality first. The current in-memory session storage is sufficient for Phase 2 goals.
+>
+> **Rationale:**
+>
+> - Phase 2 focuses on real-time session management and Claude Code integration preparation
+> - In-memory storage meets current requirements for active session management
+> - Persistence adds complexity that can be better addressed after core features are stable
+> - Allows us to better understand persistence requirements through actual usage patterns
+>
+> **Future Considerations:**
+>
+> - Database selection (SQLite, PostgreSQL, etc.)
+> - Session snapshot format and versioning
+> - Recovery mechanisms for crash scenarios
+> - Migration strategy from in-memory to persistent storage
+
+- [ ] **[DEFERRED] Create session snapshot interface**
   - Define what gets persisted
   - Add snapshot versioning
   - Create serialization methods
   - Add compression preparation
   - Plan for future database migration
 
-- [ ] **Implement session recovery stubs**
+- [ ] **[DEFERRED] Implement session recovery stubs**
   - Add `snapshotSession(id)` method
   - Create `recoverSession(snapshot)` stub
   - Add recovery event emissions
@@ -513,7 +531,15 @@ Enhance the existing session management system with:
 
 ### Deviations from Plan:
 
-**Section 2.1 - Session State Machine (2025-10-27)**
+#### Section 2.3 - Session Persistence (2025-10-28)
+
+- **Deferred to Future Phase**: Session persistence preparation
+  - Reason: Premature optimization - focus on core real-time functionality first
+  - In-memory storage is sufficient for Phase 2 development and testing
+  - Persistence requirements will be better understood after core features are stable
+  - Will be addressed in Phase 3 or Phase 4 with proper database selection and migration strategy
+
+#### Section 2.1 - Session State Machine (2025-10-27)
 
 - **Deferred**: State history tracking
   - Reason: Not needed for Phase 2 core functionality
@@ -531,7 +557,7 @@ Enhance the existing session management system with:
 
 ### Key Decisions:
 
-**State Machine Architecture (2025-10-27)**
+#### State Machine Architecture (2025-10-27)
 
 1. **Service Layer Event Emission**: Moved event emission from controller to service
    - Rationale: Service layer has full context of state transitions
