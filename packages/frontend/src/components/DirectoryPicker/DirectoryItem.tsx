@@ -3,6 +3,7 @@ import { ChevronRight, Folder, Lock } from 'lucide-react'
 import type { KeyboardEvent } from 'react'
 
 import { usePrefetchDirectory } from 'src/hooks/useFilesystem'
+import { cns } from 'src/utils/cns'
 
 interface DirectoryItemProps {
   directory: DirectoryEntry
@@ -71,12 +72,12 @@ export function DirectoryItem({
         onClick={onSelect}
         onKeyDown={handleKeyDown}
         style={{ paddingLeft: `${level * 16}px` }}
-        className={`
-          flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer
-          transition-colors hover:bg-gray-800
-          ${isSelected ? 'bg-blue-950 hover:bg-blue-900' : ''}
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset
-        `}
+        className={cns(
+          'flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer',
+          'transition-colors hover:bg-gray-800',
+          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset',
+          isSelected && 'bg-blue-950 hover:bg-blue-900',
+        )}
       >
         {/* Expand/collapse chevron */}
         <button
@@ -89,7 +90,10 @@ export function DirectoryItem({
           tabIndex={-1}
         >
           <ChevronRight
-            className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+            className={cns(
+              'w-4 h-4 transition-transform',
+              isExpanded && 'rotate-90',
+            )}
           />
         </button>
 

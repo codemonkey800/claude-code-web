@@ -6,6 +6,7 @@ import {
 import { AlertCircle, Loader2 } from 'lucide-react'
 
 import { useDirectoryBrowse } from 'src/hooks/useFilesystem'
+import { cns } from 'src/utils/cns'
 
 import { DirectoryItem } from './DirectoryItem'
 
@@ -39,7 +40,7 @@ export function DirectoryTree({
     return (
       <div
         style={{ paddingLeft: `${level * 16}px` }}
-        className="flex items-center gap-2 px-2 py-2 text-red-400"
+        className={cns('flex items-center gap-2 px-2 py-2 text-red-400')}
       >
         <AlertCircle className="w-4 h-4 flex-shrink-0" />
         <span className="text-sm flex-1">Failed to load directory</span>
@@ -58,7 +59,7 @@ export function DirectoryTree({
     return (
       <div
         style={{ paddingLeft: `${level * 16}px` }}
-        className="flex items-center gap-2 px-2 py-2 text-gray-400"
+        className={cns('flex items-center gap-2 px-2 py-2 text-gray-400')}
       >
         <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
         <span className="text-sm">Loading...</span>
@@ -77,7 +78,7 @@ export function DirectoryTree({
     return (
       <div
         style={{ paddingLeft: `${level * 16}px` }}
-        className="px-2 py-2 text-sm text-gray-400 italic"
+        className={cns('px-2 py-2 text-sm text-gray-400 italic')}
       >
         No directories found
       </div>

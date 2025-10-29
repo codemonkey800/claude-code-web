@@ -2,6 +2,7 @@ import type { Session } from '@claude-code-web/shared'
 import { Folder, Loader2, Plus } from 'lucide-react'
 
 import { useSessions } from 'src/hooks/useSessions'
+import { cns } from 'src/utils/cns'
 
 interface SessionItemProps {
   session: Session
@@ -37,24 +38,27 @@ function SessionItem({ session, isActive, onClick }: SessionItemProps) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left p-3 rounded-lg transition-colors ${
+      className={cns(
+        'w-full text-left p-3 rounded-lg transition-colors',
         isActive
           ? 'bg-blue-950 border border-blue-800'
-          : 'hover:bg-gray-800 border border-transparent'
-      }`}
+          : 'hover:bg-gray-800 border border-transparent',
+      )}
     >
       <div className="flex items-start gap-3">
         <Folder
-          className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
-            isActive ? 'text-blue-400' : 'text-gray-500'
-          }`}
+          className={cns(
+            'w-5 h-5 mt-0.5 flex-shrink-0',
+            isActive ? 'text-blue-400' : 'text-gray-500',
+          )}
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p
-              className={`text-sm font-medium truncate ${
-                isActive ? 'text-blue-300' : 'text-gray-200'
-              }`}
+              className={cns(
+                'text-sm font-medium truncate',
+                isActive ? 'text-blue-300' : 'text-gray-200',
+              )}
             >
               {workingDirectoryName}
             </p>

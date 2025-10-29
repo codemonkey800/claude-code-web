@@ -3,6 +3,8 @@ import * as ScrollArea from '@radix-ui/react-scroll-area'
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
 
+import { cns } from 'src/utils/cns'
+
 import { DirectoryTree } from './DirectoryTree'
 import { PathBreadcrumb } from './PathBreadcrumb'
 import { PathInput } from './PathInput'
@@ -77,13 +79,13 @@ export function DirectoryPicker({
           align="start"
           side="bottom"
           sideOffset={4}
-          className="
-            w-[600px] max-h-[500px]
-            bg-gray-900 rounded-lg shadow-xl border border-gray-700
-            animate-in fade-in zoom-in-95
-            flex flex-col
-            z-50
-          "
+          className={cns(
+            'w-[600px] max-h-[500px]',
+            'bg-gray-900 rounded-lg shadow-xl border border-gray-700',
+            'animate-in fade-in zoom-in-95',
+            'flex flex-col',
+            'z-50',
+          )}
         >
           {/* Breadcrumb navigation */}
           <div className="px-4 py-3 bg-gray-800 border-b border-gray-700 rounded-t-lg">
@@ -138,7 +140,11 @@ export function DirectoryPicker({
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-200 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded-md transition-colors"
+                className={cns(
+                  'px-4 py-2 text-sm font-medium text-gray-200',
+                  'bg-gray-700 hover:bg-gray-600 border border-gray-600',
+                  'rounded-md transition-colors',
+                )}
               >
                 Cancel
               </button>
@@ -146,7 +152,12 @@ export function DirectoryPicker({
                 type="button"
                 onClick={handleConfirmSelection}
                 disabled={!selectedPath}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-md transition-colors"
+                className={cns(
+                  'px-4 py-2 text-sm font-medium text-white',
+                  'bg-blue-600 hover:bg-blue-500',
+                  'disabled:bg-gray-700 disabled:cursor-not-allowed',
+                  'rounded-md transition-colors',
+                )}
               >
                 Select
               </button>

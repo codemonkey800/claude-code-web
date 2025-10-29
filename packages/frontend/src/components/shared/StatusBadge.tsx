@@ -1,5 +1,7 @@
 import { SessionStatus } from '@claude-code-web/shared'
 
+import { cns } from 'src/utils/cns'
+
 interface StatusBadgeProps {
   status: SessionStatus | undefined
 }
@@ -28,7 +30,10 @@ export function StatusBadge({ status }: StatusBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.className}`}
+      className={cns(
+        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+        config.className,
+      )}
     >
       {config.label}
     </span>

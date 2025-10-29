@@ -2,6 +2,7 @@ import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
 
 import { ChatView } from 'src/components/ChatView/ChatView'
+import { cns } from 'src/utils/cns'
 
 import { SessionSidebar } from './SessionSidebar'
 
@@ -20,11 +21,12 @@ export function ChatLayout({
     <div className="flex h-screen bg-gray-950">
       {/* Mobile: Overlay sidebar */}
       <div
-        className={`
-          fixed inset-y-0 left-0 z-50 w-80 bg-gray-900 transform transition-transform duration-300 ease-in-out
-          lg:relative lg:translate-x-0
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
+        className={cns(
+          'fixed inset-y-0 left-0 z-50 w-80 bg-gray-900',
+          'transform transition-transform duration-300 ease-in-out',
+          'lg:relative lg:translate-x-0',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+        )}
       >
         <SessionSidebar
           activeSessionId={activeSessionId}
