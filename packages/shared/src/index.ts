@@ -33,6 +33,9 @@ export * from './utils/validation'
 // Error handling utilities
 export * from './utils/error'
 
+// Utility functions
+export * from './utils/sleep'
+
 // ============================================================================
 // Contract Exports
 // ============================================================================

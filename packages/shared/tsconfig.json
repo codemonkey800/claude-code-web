@@ -8,7 +8,8 @@
     },
     "outDir": "./dist",
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "lib": ["ES2022", "DOM"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "*.config.ts"],
   "exclude": ["node_modules", "dist"]
