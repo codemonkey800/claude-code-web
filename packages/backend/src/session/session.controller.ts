@@ -39,27 +39,50 @@ export class SessionController {
 
   /**
    * Handles errors by logging and returning a standardized error response
+   * Maps error messages to appropriate HTTP status codes using NestJS exceptions
    * @param operation - Human-readable description of the failed operation
    * @param error - The error that occurred
-   * @returns Standardized 500 error response
+   * @returns Standardized error response with appropriate status code
    */
   private handleError(
     operation: string,
     error: unknown,
   ): {
-    status: HttpStatus.INTERNAL_SERVER_ERROR
+    status:
+      | HttpStatus.INTERNAL_SERVER_ERROR
+      | HttpStatus.NOT_FOUND
+      | HttpStatus.BAD_REQUEST
     body: {
       message: string
       error?: string
     }
   } {
-    this.logger.error(operation, getErrorMessage(error))
+    const errorMessage = getErrorMessage(error)
+    this.logger.error(operation, errorMessage)
+
+    // Determine appropriate status code based on error message patterns
+    let status = HttpStatus.INTERNAL_SERVER_ERROR
+
+    if (
+      errorMessage.includes('not found') ||
+      errorMessage.includes('does not exist')
+    ) {
+      status = HttpStatus.NOT_FOUND
+    } else if (
+      errorMessage.includes('Invalid') ||
+      errorMessage.includes('must be') ||
+      errorMessage.includes('required') ||
+      errorMessage.includes('validation')
+    ) {
+      status = HttpStatus.BAD_REQUEST
+    }
+
     return {
-      status: HttpStatus.INTERNAL_SERVER_ERROR,
+      status,
       body: {
         message: operation,
         ...(process.env.NODE_ENV === 'development' && {
-          error: getErrorMessage(error),
+          error: errorMessage,
         }),
       },
     } as const

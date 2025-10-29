@@ -9,11 +9,9 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule)
   const configService = app.get(ConfigService)
 
-  // Enable CORS for frontend communication
-  const frontendUrl = configService.get<string>('FRONTEND_URL')
+  // Enable CORS for all origins (public API)
   app.enableCors({
-    origin: frontendUrl,
-    credentials: true,
+    origin: '*',
   })
 
   const port = configService.get<number>('PORT', 8081)
@@ -22,7 +20,7 @@ async function bootstrap(): Promise<void> {
   // eslint-disable-next-line no-console
   console.log(`🚀 Backend server is running on: http://localhost:${port}`)
   // eslint-disable-next-line no-console
-  console.log(`🔗 CORS enabled for: ${frontendUrl}`)
+  console.log(`🔗 CORS enabled for all origins`)
 }
 
 bootstrap().catch(error => {

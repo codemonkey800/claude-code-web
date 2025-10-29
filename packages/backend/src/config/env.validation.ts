@@ -16,6 +16,7 @@ export const DEFAULT_FS_ALLOWED_BASE_DIR = '~'
 export const DEFAULT_FS_DEFAULT_PAGE_SIZE = 100
 export const DEFAULT_FS_MAX_PAGE_SIZE = 500
 export const DEFAULT_FS_SHOW_HIDDEN_FILES = false
+export const DEFAULT_CLAUDE_SUBPROCESS_KILL_TIMEOUT = 5000
 
 enum Environment {
   Development = 'development',
@@ -60,6 +61,14 @@ export class EnvironmentVariables {
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
   FS_SHOW_HIDDEN_FILES?: boolean = DEFAULT_FS_SHOW_HIDDEN_FILES
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1000)
+  @Max(30000)
+  CLAUDE_SUBPROCESS_KILL_TIMEOUT?: number =
+    DEFAULT_CLAUDE_SUBPROCESS_KILL_TIMEOUT
 }
 
 export function validate(

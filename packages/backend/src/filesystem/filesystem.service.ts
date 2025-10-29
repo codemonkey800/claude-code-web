@@ -1,6 +1,13 @@
-import { access, readdir, stat } from 'node:fs/promises'
+import { access, readdir, realpath, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { extname, join, normalize, resolve } from 'node:path'
+import {
+  extname,
+  isAbsolute,
+  join,
+  normalize,
+  relative,
+  resolve,
+} from 'node:path'
 
 import {
   type DirectoryBrowseOptions,
@@ -234,11 +241,9 @@ export class FileSystemService {
    * Security approach:
    * 1. Home directory expansion (~)
    * 2. Path normalization and resolution to absolute path
-   * 3. Boundary checking (must be within allowed base directory)
-   * 4. Access verification (path must exist and be accessible)
-   *
-   * The resolve(normalize()) approach handles all directory traversal patterns correctly,
-   * including encoded, Windows-style, and other variations.
+   * 3. Symlink resolution (prevents escaping via symlinks)
+   * 4. Boundary checking using path.relative() (prevents path traversal)
+   * 5. Access verification (path must exist and be accessible)
    *
    * @param path - Path to resolve and validate
    * @returns Resolved absolute path
@@ -253,11 +258,18 @@ export class FileSystemService {
     // This handles all directory traversal patterns (../, ..\, encoded, etc.)
     resolvedPath = resolve(normalize(resolvedPath))
 
+    // Resolve symlinks to prevent escaping via symbolic links
+    // If path doesn't exist yet, realpath will throw - we'll catch and use normalized path
+    try {
+      resolvedPath = await realpath(resolvedPath)
+    } catch {
+      // Path doesn't exist - continue with normalized path for validation
+      // The access check below will catch this if needed
+    }
+
     // Check if path is within allowed boundaries
     if (!this.isPathAllowed(resolvedPath)) {
-      throw new Error(
-        `Access denied: Path is outside allowed directory: ${resolvedPath}`,
-      )
+      throw new Error(`Access denied: Path is outside allowed directory`)
     }
 
     // Verify path exists and is accessible
@@ -273,13 +285,18 @@ export class FileSystemService {
   }
 
   /**
-   * Check if path is within allowed base directory
+   * Check if path is within allowed base directory using path.relative()
+   * This prevents path traversal attacks better than string prefix matching
    * @param resolvedPath - Absolute path to check
    * @returns True if path is allowed, false otherwise
    * @private
    */
   private isPathAllowed(resolvedPath: string): boolean {
-    return resolvedPath.startsWith(this.config.allowedBaseDir)
+    // Use path.relative to ensure we're within bounds
+    const relativePath = relative(this.config.allowedBaseDir, resolvedPath)
+
+    // If relative path starts with '..' or is absolute, it's outside the boundary
+    return !relativePath.startsWith('..') && !isAbsolute(relativePath)
   }
 
   /**

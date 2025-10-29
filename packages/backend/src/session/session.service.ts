@@ -7,12 +7,12 @@ import {
   type Session,
   type SessionError,
   SessionStatus,
-  sleep,
 } from '@claude-code-web/shared'
 import { Injectable, Logger } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 
 import { FileSystemService } from 'src/filesystem/filesystem.service'
+import { ClaudeCodeSubprocessService } from 'src/modules/claude-code/claude-code-subprocess.service'
 
 /**
  * Service for managing coding workspace sessions
@@ -26,6 +26,7 @@ export class SessionService {
   constructor(
     private readonly fileSystemService: FileSystemService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly claudeCodeService: ClaudeCodeSubprocessService,
   ) {}
 
   /**
@@ -241,9 +242,8 @@ export class SessionService {
     }
 
     try {
-      // TODO: Initialize Claude Code SDK here when integrated
-      // await this.claudeCodeService.initialize(session.workingDirectory)
-      await sleep(1000) // Placeholder for async SDK initialization
+      // Initialize Claude Code SDK
+      await this.claudeCodeService.initialize(id, session.workingDirectory)
 
       // Transition to ACTIVE
       const updated = this.updateSessionStatus(id, SessionStatus.ACTIVE)
@@ -288,9 +288,8 @@ export class SessionService {
     }
 
     try {
-      // TODO: Gracefully shut down Claude Code SDK here when integrated
-      // await this.claudeCodeService.shutdown(id)
-      await sleep(1000) // Placeholder for async SDK cleanup
+      // Gracefully shut down Claude Code SDK
+      await this.claudeCodeService.shutdown(id)
 
       // Transition to TERMINATED
       const updated = this.updateSessionStatus(id, SessionStatus.TERMINATED)

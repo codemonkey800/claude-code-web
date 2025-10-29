@@ -33,6 +33,12 @@ export const WS_EVENTS = {
   SESSION_STATUS: 'session:status',
   /** Error event for handling failures */
   ERROR: 'error',
+
+  // Claude Code WebSocket events (server to client)
+  /** Claude Code message stream (contains SDK message) */
+  CLAUDE_MESSAGE: 'claude:message',
+  /** Claude Code query result (completion summary) */
+  CLAUDE_QUERY_RESULT: 'claude:query-result',
 } as const
 
 /**
@@ -72,6 +78,18 @@ export const INTERNAL_EVENTS = {
   SESSION_DELETED: 'session.deleted',
   /** Emitted when a session status transitions to a new state */
   SESSION_STATUS_CHANGED: 'session.status.changed',
+
+  // Claude Code lifecycle events
+  /** Emitted when a Claude Code query starts */
+  CLAUDE_QUERY_STARTED: 'claude.query.started',
+  /** Emitted when a Claude Code query completes successfully */
+  CLAUDE_QUERY_COMPLETED: 'claude.query.completed',
+  /** Emitted when a Claude Code query encounters an error */
+  CLAUDE_QUERY_ERROR: 'claude.query.error',
+
+  // Claude Code streaming events
+  /** Emitted for every message from the Claude Agent SDK (generic event) */
+  CLAUDE_MESSAGE: 'claude.message',
 } as const
 
 /**

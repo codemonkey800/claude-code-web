@@ -115,6 +115,71 @@ shared/src/
 └── utils/                     # Validation schemas, error utils
 ```
 
+### Claude Code Module
+
+Located in `packages/backend/src/modules/claude-code/`, this module integrates with the Claude Code CLI as a subprocess (matching happy-cli architecture).
+
+**Architecture:**
+
+- **IClaudeCodeService**: Abstract interface for Claude Code operations
+- **ClaudeCodeSubprocessService**: Spawns global `claude` CLI as child process (injected directly via standard NestJS dependency injection)
+
+**Subprocess Integration:**
+
+The service spawns the global `claude` CLI command with these arguments:
+
+- `--output-format stream-json` - JSON streaming output
+- `--verbose` - Detailed logging
+- `--input-format stream-json` - Accept JSON input via stdin
+- `--permission-mode bypassPermissions` - Auto-approve all tools
+- `--model <model>` - Optional model selection
+- `--resume <sessionId>` - Resume existing sessions
+
+**Message Flow:**
+
+1. User sends prompt via WebSocket
+2. Backend spawns `claude` subprocess with arguments
+3. Backend writes JSON message to subprocess stdin
+4. CLI executes query and streams JSON messages via stdout
+5. Backend parses messages line-by-line and emits events via EventEmitter2
+6. WebSocket Gateway listens to events and broadcasts to session rooms
+7. Frontend receives real-time updates via Socket.io
+
+**Message Types from CLI:**
+
+Messages from the Claude CLI subprocess have a `type` field:
+
+- `system`: System events (init with session_id, completion, etc.)
+- `assistant`: Claude's responses and thoughts
+- `user`: Tool results (from tool execution)
+- `result`: Query completion with success/error status
+
+Frontend can process messages based on `message.type` to build rich UI.
+
+**Integration with SessionService:**
+
+- `startSession()` calls `claudeCodeService.initialize()` to set up Claude Code
+- `stopSession()` calls `claudeCodeService.shutdown()` for cleanup and process termination
+- Sessions automatically transition: `INITIALIZING` → `ACTIVE` → `TERMINATED`
+
+**Authentication:**
+
+Authentication is handled by the Claude CLI itself, NOT by this backend. Users must authenticate the CLI before running this application:
+
+**Option 1** (Recommended): OAuth via Claude CLI
+
+```bash
+claude auth
+```
+
+**Option 2**: API Key environment variable
+
+```bash
+export CLAUDE_API_KEY=your_anthropic_api_key
+```
+
+The subprocess automatically inherits these credentials from the environment.
+
 ## Development Commands
 
 ### Root Level (affects all packages)
@@ -418,10 +483,29 @@ useEffect(() => {
 
 Backend configuration is validated in `backend/src/config/env.validation.ts`:
 
-- `PORT`: Server port (default: 3000)
+- `PORT`: Server port (default: 8081)
 - `NODE_ENV`: Environment (development/production)
-- `MAX_EVENT_LISTENERS`: EventEmitter2 max listeners (default: 20)
+- `MAX_EVENT_LISTENERS`: EventEmitter2 max listeners (default: 100)
+- `FRONTEND_URL`: Frontend URL for CORS (default: http://localhost:8080)
 - Additional variables can be added to the validation schema
+
+**Claude CLI Authentication** (handled by CLI, not backend):
+
+The backend spawns the global `claude` CLI as a subprocess, which handles its own authentication. Users must authenticate the Claude CLI before using this application:
+
+**Option 1** (Recommended): OAuth via Claude CLI
+
+```bash
+claude auth
+```
+
+**Option 2**: API Key environment variable
+
+```bash
+export CLAUDE_API_KEY=your_anthropic_api_key
+```
+
+The subprocess automatically inherits these credentials from the environment. No backend configuration needed.
 
 ## Troubleshooting
 

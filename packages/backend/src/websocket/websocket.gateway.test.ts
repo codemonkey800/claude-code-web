@@ -128,6 +128,8 @@ describe('AppWebSocketGateway', () => {
       // Manually add client to a session room
       const sessionRooms = gateway['sessionRooms']
       sessionRooms.set(sessionId, new Set(['client-1']))
+      // Add session to socket's rooms (Socket.io tracks this)
+      mockClient.rooms.add(sessionId)
 
       gateway.handleDisconnect(mockClient as unknown as Socket)
 
@@ -145,6 +147,9 @@ describe('AppWebSocketGateway', () => {
       // Add both clients to session room
       const sessionRooms = gateway['sessionRooms']
       sessionRooms.set(sessionId, new Set(['client-1', 'client-2']))
+      // Add session to both sockets' rooms (Socket.io tracks this)
+      mockClient1.rooms.add(sessionId)
+      mockClient2.rooms.add(sessionId)
 
       // Disconnect first client - room should still exist
       gateway.handleDisconnect(mockClient1 as unknown as Socket)
@@ -640,6 +645,341 @@ describe('AppWebSocketGateway', () => {
         expect.objectContaining({
           id: correlationId,
         }),
+      )
+    })
+  })
+
+  describe('Input Validation', () => {
+    it('should validate ping events and emit error for invalid format', () => {
+      const mockClient = createMockSocket('client-1')
+
+      gateway.handlePing(mockClient as unknown as Socket, {
+        invalidField: 'test',
+      })
+
+      expect(mockClient.emit).toHaveBeenCalledWith(
+        WS_EVENTS.ERROR,
+        expect.objectContaining({
+          type: WS_EVENTS.ERROR,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          payload: expect.objectContaining({
+            code: ERROR_CODES.VALIDATION_ERROR,
+            message: 'Invalid event format',
+          }),
+        }),
+      )
+    })
+
+    it('should validate session join events and emit error for invalid format', () => {
+      const mockClient = createMockSocket('client-1')
+
+      gateway.handleJoinSession(mockClient as unknown as Socket, {
+        type: 'wrong-type',
+        payload: {},
+      })
+
+      expect(mockClient.emit).toHaveBeenCalledWith(
+        WS_EVENTS.ERROR,
+        expect.objectContaining({
+          type: WS_EVENTS.ERROR,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          payload: expect.objectContaining({
+            code: ERROR_CODES.VALIDATION_ERROR,
+            message: 'Invalid event format',
+          }),
+        }),
+      )
+    })
+
+    it('should validate session leave events and emit error for invalid format', () => {
+      const mockClient = createMockSocket('client-1')
+
+      gateway.handleLeaveSession(mockClient as unknown as Socket, {
+        missingType: true,
+      })
+
+      expect(mockClient.emit).toHaveBeenCalledWith(
+        WS_EVENTS.ERROR,
+        expect.objectContaining({
+          type: WS_EVENTS.ERROR,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          payload: expect.objectContaining({
+            code: ERROR_CODES.VALIDATION_ERROR,
+          }),
+        }),
+      )
+    })
+
+    it('should validate session message events and emit error for invalid format', () => {
+      const mockClient = createMockSocket('client-1')
+
+      gateway.handleSessionMessage(mockClient as unknown as Socket, {
+        type: WS_EVENTS.SESSION_MESSAGE,
+        // Missing required payload fields
+      })
+
+      expect(mockClient.emit).toHaveBeenCalledWith(
+        WS_EVENTS.ERROR,
+        expect.objectContaining({
+          type: WS_EVENTS.ERROR,
+        }),
+      )
+    })
+
+    it('should include validation error details in error event', () => {
+      const mockClient = createMockSocket('client-1')
+
+      gateway.handlePing(mockClient as unknown as Socket, null)
+
+      expect(mockClient.emit).toHaveBeenCalledWith(
+        WS_EVENTS.ERROR,
+        expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          payload: expect.objectContaining({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            details: expect.any(Array),
+          }),
+        }),
+      )
+    })
+
+    it('should handle wrong event type gracefully', () => {
+      const mockClient = createMockSocket('client-1')
+
+      // Send join event to ping handler
+      gateway.handlePing(mockClient as unknown as Socket, {
+        type: WS_EVENTS.SESSION_JOIN,
+        timestamp: new Date().toISOString(),
+        id: 'test-123',
+        payload: { sessionId: 'session-123' },
+      })
+
+      // Should not emit pong for wrong event type
+      expect(mockClient.emit).not.toHaveBeenCalledWith(
+        WS_EVENTS.PONG,
+        expect.anything(),
+      )
+    })
+  })
+
+  describe('Claude Message Handler (handleClaudeMessage)', () => {
+    it('should broadcast Claude messages to session room clients', () => {
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      const queryId = 'query-123'
+      const message = { type: 'assistant', content: 'Hello' }
+
+      // Setup session with clients
+      const sessionRooms = gateway['sessionRooms']
+      sessionRooms.set(sessionId, new Set(['client-1', 'client-2']))
+
+      gateway.handleClaudeMessage({
+        sessionId,
+        queryId,
+        message,
+      })
+
+      expect(mockServer.to).toHaveBeenCalledWith(sessionId)
+      const roomEmit = getRoomEmit()
+      expect(roomEmit).toHaveBeenCalledWith(
+        WS_EVENTS.CLAUDE_MESSAGE,
+        expect.objectContaining({
+          type: WS_EVENTS.CLAUDE_MESSAGE,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          payload: expect.objectContaining({
+            sessionId,
+            queryId,
+            message,
+          }),
+        }),
+      )
+    })
+
+    it('should handle no clients in session room gracefully', () => {
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+
+      // No clients in session room
+      gateway.handleClaudeMessage({
+        sessionId,
+        queryId: 'query-123',
+        message: { type: 'assistant' },
+      })
+
+      // Should not try to broadcast
+      expect(mockServer.to).not.toHaveBeenCalled()
+    })
+
+    it('should include queryId in message payload', () => {
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      const queryId = 'query-xyz'
+
+      const sessionRooms = gateway['sessionRooms']
+      sessionRooms.set(sessionId, new Set(['client-1']))
+
+      gateway.handleClaudeMessage({
+        sessionId,
+        queryId,
+        message: { type: 'system' },
+      })
+
+      const roomEmit = getRoomEmit()
+      expect(roomEmit).toHaveBeenCalledWith(
+        WS_EVENTS.CLAUDE_MESSAGE,
+        expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          payload: expect.objectContaining({
+            queryId,
+          }),
+        }),
+      )
+    })
+
+    it('should forward SDK message directly to clients', () => {
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+      const sdkMessage = {
+        type: 'tool_call',
+        name: 'read_file',
+        arguments: { path: '/test.txt' },
+      }
+
+      const sessionRooms = gateway['sessionRooms']
+      sessionRooms.set(sessionId, new Set(['client-1']))
+
+      gateway.handleClaudeMessage({
+        sessionId,
+        queryId: 'query-123',
+        message: sdkMessage,
+      })
+
+      const roomEmit = getRoomEmit()
+      expect(roomEmit).toHaveBeenCalledWith(
+        WS_EVENTS.CLAUDE_MESSAGE,
+        expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          payload: expect.objectContaining({
+            message: sdkMessage,
+          }),
+        }),
+      )
+    })
+
+    it('should log broadcast correctly', () => {
+      const logSpy = jest.spyOn(gateway['logger'], 'debug')
+      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
+
+      const sessionRooms = gateway['sessionRooms']
+      sessionRooms.set(sessionId, new Set(['client-1', 'client-2']))
+
+      gateway.handleClaudeMessage({
+        sessionId,
+        queryId: 'query-123',
+        message: { type: 'assistant' },
+      })
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Broadcast Claude message to 2 clients'),
+      )
+    })
+  })
+
+  describe('Claude Query Completion Handler (handleClaudeQueryCompleted)', () => {
+    it('should broadcast query result to session room', () => {
+      const result = {
+        queryId: 'query-123',
+        sessionId: '550e8400-e29b-41d4-a716-446655440000',
+        status: 'success' as const,
+        duration: 5000,
+      }
+
+      const sessionRooms = gateway['sessionRooms']
+      sessionRooms.set(result.sessionId, new Set(['client-1']))
+
+      gateway.handleClaudeQueryCompleted({
+        queryId: result.queryId,
+        result,
+      })
+
+      expect(mockServer.to).toHaveBeenCalledWith(result.sessionId)
+      const roomEmit = getRoomEmit()
+      expect(roomEmit).toHaveBeenCalledWith(
+        WS_EVENTS.CLAUDE_QUERY_RESULT,
+        expect.objectContaining({
+          type: WS_EVENTS.CLAUDE_QUERY_RESULT,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          payload: expect.objectContaining({
+            result,
+          }),
+        }),
+      )
+    })
+
+    it('should handle no clients in session room gracefully', () => {
+      const result = {
+        queryId: 'query-123',
+        sessionId: '550e8400-e29b-41d4-a716-446655440000',
+        status: 'success' as const,
+        duration: 5000,
+      }
+
+      // No clients in session room
+      gateway.handleClaudeQueryCompleted({
+        queryId: result.queryId,
+        result,
+      })
+
+      expect(mockServer.to).not.toHaveBeenCalled()
+    })
+
+    it('should include duration and status in result', () => {
+      const result = {
+        queryId: 'query-123',
+        sessionId: '550e8400-e29b-41d4-a716-446655440000',
+        status: 'success' as const,
+        duration: 3500,
+      }
+
+      const sessionRooms = gateway['sessionRooms']
+      sessionRooms.set(result.sessionId, new Set(['client-1']))
+
+      gateway.handleClaudeQueryCompleted({
+        queryId: result.queryId,
+        result,
+      })
+
+      const roomEmit = getRoomEmit()
+      expect(roomEmit).toHaveBeenCalledWith(
+        WS_EVENTS.CLAUDE_QUERY_RESULT,
+        expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          payload: expect.objectContaining({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            result: expect.objectContaining({
+              duration: 3500,
+              status: 'success',
+            }),
+          }),
+        }),
+      )
+    })
+
+    it('should log completion with metrics', () => {
+      const logSpy = jest.spyOn(gateway['logger'], 'log')
+      const result = {
+        queryId: 'query-abc',
+        sessionId: '550e8400-e29b-41d4-a716-446655440000',
+        status: 'success' as const,
+        duration: 2500,
+      }
+
+      const sessionRooms = gateway['sessionRooms']
+      sessionRooms.set(result.sessionId, new Set(['client-1']))
+
+      gateway.handleClaudeQueryCompleted({
+        queryId: result.queryId,
+        result,
+      })
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/Query query-abc completed.*2500ms/),
       )
     })
   })

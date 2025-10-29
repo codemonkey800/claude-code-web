@@ -1,9 +1,11 @@
 import {
+  type ClaudeCodeQueryResult,
   ERROR_CODES,
   type ErrorEvent,
   INTERNAL_EVENTS,
   type PingEvent,
   type PongEvent,
+  safeValidateClientEvent,
   type Session,
   type SessionDeletedEvent,
   type SessionJoinedEvent,
@@ -31,17 +33,10 @@ import { SessionService } from 'src/session/session.service'
 /**
  * WebSocket Gateway for handling real-time bidirectional communication
  * Implements session rooms for session-scoped messaging
- *
- * Note: The @WebSocketGateway decorator is evaluated at class definition time,
- * before dependency injection is available, so we cannot use ConfigService here.
- * The FRONTEND_URL is validated through the env.validation.ts schema and defaults
- * to 'http://localhost:8080' for development. The main CORS configuration in
- * main.ts uses ConfigService at runtime for the REST API.
  */
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:8080',
-    credentials: true,
+    origin: '*',
   },
 })
 export class AppWebSocketGateway
@@ -69,32 +64,30 @@ export class AppWebSocketGateway
 
   /**
    * Handle client disconnections
-   * Clean up from all session rooms
+   * Clean up from all session rooms using Socket.io's built-in room tracking
    */
   handleDisconnect(client: Socket): void {
     this.connectedClients.delete(client.id)
 
-    const sessionsToDelete: string[] = []
+    // Get all rooms this socket is in (Socket.io tracks this automatically)
+    // Filter out the socket's own ID (Socket.io adds socket ID as a room)
+    const rooms = Array.from(client.rooms).filter(room => room !== client.id)
 
     // Clean up from all session rooms
-    for (const [sessionId, sockets] of this.sessionRooms.entries()) {
-      if (sockets.has(client.id)) {
+    for (const sessionId of rooms) {
+      const sockets = this.sessionRooms.get(sessionId)
+      if (sockets) {
         sockets.delete(client.id)
         this.logger.debug(
           `Removed disconnected client ${client.id} from session ${sessionId}`,
         )
 
-        // Mark empty session rooms for deletion
+        // Remove empty session rooms
         if (sockets.size === 0) {
-          sessionsToDelete.push(sessionId)
+          this.sessionRooms.delete(sessionId)
+          this.logger.debug(`Removed empty session room: ${sessionId}`)
         }
       }
-    }
-
-    // Remove empty session rooms after iteration
-    for (const sessionId of sessionsToDelete) {
-      this.sessionRooms.delete(sessionId)
-      this.logger.debug(`Removed empty session room: ${sessionId}`)
     }
 
     this.logger.log(
@@ -107,13 +100,36 @@ export class AppWebSocketGateway
    * Responds with pong event preserving correlation id
    */
   @SubscribeMessage(WS_EVENTS.PING)
-  handlePing(client: Socket, data: PingEvent): void {
+  handlePing(client: Socket, data: unknown): void {
+    // Validate incoming event
+    const validation = safeValidateClientEvent(data)
+
+    if (!validation.success) {
+      this.logger.warn(`Invalid ping event from ${client.id}`)
+      const errorEvent: ErrorEvent = {
+        type: WS_EVENTS.ERROR,
+        timestamp: new Date().toISOString(),
+        payload: {
+          code: ERROR_CODES.VALIDATION_ERROR,
+          message: 'Invalid event format',
+          details: validation.error.errors,
+        },
+      }
+      client.emit(WS_EVENTS.ERROR, errorEvent)
+      return
+    }
+
+    if (validation.data.type !== WS_EVENTS.PING) {
+      return // Wrong event type
+    }
+
+    const pingEvent = validation.data as PingEvent
     this.logger.debug(`Received ping from client: ${client.id}`)
 
     const pongEvent: PongEvent = {
       type: WS_EVENTS.PONG,
       timestamp: new Date().toISOString(),
-      id: data.id,
+      id: pingEvent.id,
     }
 
     client.emit(WS_EVENTS.PONG, pongEvent)
@@ -125,8 +141,31 @@ export class AppWebSocketGateway
    * Validates session exists and adds client to session room
    */
   @SubscribeMessage(WS_EVENTS.SESSION_JOIN)
-  handleJoinSession(client: Socket, data: SessionJoinEvent): void {
-    const { sessionId } = data.payload
+  handleJoinSession(client: Socket, data: unknown): void {
+    // Validate incoming event
+    const validation = safeValidateClientEvent(data)
+
+    if (!validation.success) {
+      this.logger.warn(`Invalid session join event from ${client.id}`)
+      const errorEvent: ErrorEvent = {
+        type: WS_EVENTS.ERROR,
+        timestamp: new Date().toISOString(),
+        payload: {
+          code: ERROR_CODES.VALIDATION_ERROR,
+          message: 'Invalid event format',
+          details: validation.error.errors,
+        },
+      }
+      client.emit(WS_EVENTS.ERROR, errorEvent)
+      return
+    }
+
+    if (validation.data.type !== WS_EVENTS.SESSION_JOIN) {
+      return // Wrong event type
+    }
+
+    const joinEvent = validation.data as SessionJoinEvent
+    const { sessionId } = joinEvent.payload
 
     this.logger.log(
       `Client ${client.id} attempting to join session: ${sessionId}`,
@@ -142,7 +181,7 @@ export class AppWebSocketGateway
       const errorEvent: ErrorEvent = {
         type: WS_EVENTS.ERROR,
         timestamp: new Date().toISOString(),
-        id: data.id,
+        id: joinEvent.id,
         payload: {
           code: ERROR_CODES.SESSION_NOT_FOUND,
           message: `Session not found: ${sessionId}`,
@@ -172,7 +211,7 @@ export class AppWebSocketGateway
     const joinedEvent: SessionJoinedEvent = {
       type: WS_EVENTS.SESSION_JOINED,
       timestamp: new Date().toISOString(),
-      id: data.id,
+      id: joinEvent.id,
       payload: {
         sessionId,
         session,
@@ -187,8 +226,31 @@ export class AppWebSocketGateway
    * Removes client from session room
    */
   @SubscribeMessage(WS_EVENTS.SESSION_LEAVE)
-  handleLeaveSession(client: Socket, data: SessionLeaveEvent): void {
-    const { sessionId } = data.payload
+  handleLeaveSession(client: Socket, data: unknown): void {
+    // Validate incoming event
+    const validation = safeValidateClientEvent(data)
+
+    if (!validation.success) {
+      this.logger.warn(`Invalid session leave event from ${client.id}`)
+      const errorEvent: ErrorEvent = {
+        type: WS_EVENTS.ERROR,
+        timestamp: new Date().toISOString(),
+        payload: {
+          code: ERROR_CODES.VALIDATION_ERROR,
+          message: 'Invalid event format',
+          details: validation.error.errors,
+        },
+      }
+      client.emit(WS_EVENTS.ERROR, errorEvent)
+      return
+    }
+
+    if (validation.data.type !== WS_EVENTS.SESSION_LEAVE) {
+      return // Wrong event type
+    }
+
+    const leaveEvent = validation.data as SessionLeaveEvent
+    const { sessionId } = leaveEvent.payload
 
     this.logger.log(`Client ${client.id} leaving session: ${sessionId}`)
 
@@ -211,7 +273,7 @@ export class AppWebSocketGateway
     const leftEvent: SessionLeftEvent = {
       type: WS_EVENTS.SESSION_LEFT,
       timestamp: new Date().toISOString(),
-      id: data.id,
+      id: leaveEvent.id,
       payload: {
         sessionId,
       },
@@ -225,8 +287,31 @@ export class AppWebSocketGateway
    * Broadcasts message to all clients in the session room
    */
   @SubscribeMessage(WS_EVENTS.SESSION_MESSAGE)
-  handleSessionMessage(client: Socket, data: SessionMessageEvent): void {
-    const { sessionId, content } = data.payload
+  handleSessionMessage(client: Socket, data: unknown): void {
+    // Validate incoming event
+    const validation = safeValidateClientEvent(data)
+
+    if (!validation.success) {
+      this.logger.warn(`Invalid session message event from ${client.id}`)
+      const errorEvent: ErrorEvent = {
+        type: WS_EVENTS.ERROR,
+        timestamp: new Date().toISOString(),
+        payload: {
+          code: ERROR_CODES.VALIDATION_ERROR,
+          message: 'Invalid event format',
+          details: validation.error.errors,
+        },
+      }
+      client.emit(WS_EVENTS.ERROR, errorEvent)
+      return
+    }
+
+    if (validation.data.type !== WS_EVENTS.SESSION_MESSAGE) {
+      return // Wrong event type
+    }
+
+    const messageEvent = validation.data as SessionMessageEvent
+    const { sessionId, content } = messageEvent.payload
 
     this.logger.debug(
       `Received session message from client ${client.id} for session ${sessionId}`,
@@ -242,7 +327,7 @@ export class AppWebSocketGateway
       const errorEvent: ErrorEvent = {
         type: WS_EVENTS.ERROR,
         timestamp: new Date().toISOString(),
-        id: data.id,
+        id: messageEvent.id,
         payload: {
           code: ERROR_CODES.INVALID_REQUEST,
           message: `You must join session ${sessionId} before sending messages`,
@@ -270,7 +355,7 @@ export class AppWebSocketGateway
       const errorEvent: ErrorEvent = {
         type: WS_EVENTS.ERROR,
         timestamp: new Date().toISOString(),
-        id: data.id,
+        id: messageEvent.id,
         payload: {
           code: ERROR_CODES.SESSION_NOT_FOUND,
           message: `Session no longer exists: ${sessionId}`,
@@ -285,7 +370,7 @@ export class AppWebSocketGateway
     const messageResponse: SessionMessageResponseEvent = {
       type: WS_EVENTS.SESSION_MESSAGE,
       timestamp: new Date().toISOString(),
-      id: data.id,
+      id: messageEvent.id,
       payload: {
         sessionId,
         content,
@@ -380,6 +465,69 @@ export class AppWebSocketGateway
     this.server.to(sessionId).emit(WS_EVENTS.SESSION_STATUS, statusUpdateEvent)
     this.logger.log(
       `Broadcast status change to ${sockets.size} clients in session ${sessionId}`,
+    )
+  }
+
+  /**
+   * Handle Claude messages from ClaudeCodeService
+   * Forwards SDK messages to session room clients
+   */
+  @OnEvent(INTERNAL_EVENTS.CLAUDE_MESSAGE)
+  handleClaudeMessage(payload: {
+    sessionId: string
+    queryId: string
+    message: unknown // SDK message type (assistant, tool_call, etc.)
+  }): void {
+    const { sessionId, queryId, message } = payload
+
+    const sockets = this.sessionRooms.get(sessionId)
+    if (!sockets || sockets.size === 0) {
+      this.logger.debug(`No clients in session ${sessionId} for Claude message`)
+      return
+    }
+
+    // Broadcast SDK message directly to clients
+    this.server.to(sessionId).emit(WS_EVENTS.CLAUDE_MESSAGE, {
+      type: WS_EVENTS.CLAUDE_MESSAGE,
+      timestamp: new Date().toISOString(),
+      payload: {
+        sessionId,
+        queryId,
+        message, // Full SDK message (type: assistant|tool_call|tool_result|error|system)
+      },
+    })
+
+    this.logger.debug(
+      `Broadcast Claude message to ${sockets.size} clients in session ${sessionId}`,
+    )
+  }
+
+  /**
+   * Handle query completion events
+   */
+  @OnEvent(INTERNAL_EVENTS.CLAUDE_QUERY_COMPLETED)
+  handleClaudeQueryCompleted(payload: {
+    queryId: string
+    result: ClaudeCodeQueryResult
+  }): void {
+    const { result } = payload
+
+    const sockets = this.sessionRooms.get(result.sessionId)
+    if (!sockets || sockets.size === 0) {
+      this.logger.debug(
+        `No clients in session ${result.sessionId} for query result`,
+      )
+      return
+    }
+
+    this.server.to(result.sessionId).emit(WS_EVENTS.CLAUDE_QUERY_RESULT, {
+      type: WS_EVENTS.CLAUDE_QUERY_RESULT,
+      timestamp: new Date().toISOString(),
+      payload: { result },
+    })
+
+    this.logger.log(
+      `Query ${result.queryId} completed for session ${result.sessionId} (${result.duration}ms)`,
     )
   }
 }

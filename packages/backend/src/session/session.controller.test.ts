@@ -490,4 +490,178 @@ describe('SessionController', () => {
       }
     })
   })
+
+  describe('handleError status code mapping', () => {
+    beforeEach(() => {
+      // Set NODE_ENV to production to test error detail hiding
+      process.env.NODE_ENV = 'production'
+    })
+
+    afterEach(() => {
+      delete process.env.NODE_ENV
+    })
+
+    it('should return 404 for "not found" errors', async () => {
+      sessionService.getSession.mockImplementation(() => {
+        throw new Error('Session not found')
+      })
+
+      const handlerInstance = controller.handler()
+      const result = (await handlerInstance.getSession({
+        params: { id: '550e8400-e29b-41d4-a716-446655440000' },
+        headers: {},
+      })) as GetSessionResponse
+
+      expect(result.status).toBe(404)
+      if (result.status === 404) {
+        expect(result.body.message).toBe('Failed to fetch session')
+      }
+    })
+
+    it('should return 404 for "does not exist" errors', async () => {
+      sessionService.getSession.mockImplementation(() => {
+        throw new Error('Resource does not exist')
+      })
+
+      const handlerInstance = controller.handler()
+      const result = (await handlerInstance.getSession({
+        params: { id: '550e8400-e29b-41d4-a716-446655440000' },
+        headers: {},
+      })) as GetSessionResponse
+
+      expect(result.status).toBe(404)
+    })
+
+    it('should return 400 for "Invalid" errors', async () => {
+      sessionService.createSession.mockImplementation(() => {
+        throw new Error('Invalid working directory')
+      })
+
+      const handlerInstance = controller.handler()
+      const result = (await handlerInstance.createSession({
+        headers: {},
+        body: { workingDirectory: '' },
+      })) as CreateSessionResponse
+
+      expect(result.status).toBe(400)
+      if (result.status === 400) {
+        expect(result.body.message).toBe('Failed to create session')
+      }
+    })
+
+    it('should return 400 for "must be" validation errors', async () => {
+      sessionService.createSession.mockImplementation(() => {
+        throw new Error('Working directory must be an absolute path')
+      })
+
+      const handlerInstance = controller.handler()
+      const result = (await handlerInstance.createSession({
+        headers: {},
+        body: { workingDirectory: 'relative/path' },
+      })) as CreateSessionResponse
+
+      expect(result.status).toBe(400)
+    })
+
+    it('should return 400 for "required" errors', async () => {
+      sessionService.createSession.mockImplementation(() => {
+        throw new Error('Working directory is required')
+      })
+
+      const handlerInstance = controller.handler()
+      const result = (await handlerInstance.createSession({
+        headers: {},
+        body: { workingDirectory: '/test' },
+      })) as CreateSessionResponse
+
+      expect(result.status).toBe(400)
+    })
+
+    it('should return 400 for "validation" errors', async () => {
+      sessionService.updateSessionStatus.mockImplementation(() => {
+        throw new Error('Status validation failed')
+      })
+
+      const handlerInstance = controller.handler()
+      const result = (await handlerInstance.updateSessionStatus({
+        params: { id: '550e8400-e29b-41d4-a716-446655440000' },
+        headers: {},
+        body: { status: SessionStatus.ACTIVE },
+      })) as UpdateSessionResponse
+
+      expect(result.status).toBe(400)
+    })
+
+    it('should return 500 for other errors (default)', async () => {
+      sessionService.getSession.mockImplementation(() => {
+        throw new Error('Database connection failed')
+      })
+
+      const handlerInstance = controller.handler()
+      const result = (await handlerInstance.getSession({
+        params: { id: '550e8400-e29b-41d4-a716-446655440000' },
+        headers: {},
+      })) as GetSessionResponse
+
+      expect(result.status).toBe(500)
+      if (result.status === 500) {
+        expect(result.body.message).toBe('Failed to fetch session')
+      }
+    })
+
+    it('should preserve error details in development mode', async () => {
+      // Set NODE_ENV to development
+      process.env.NODE_ENV = 'development'
+
+      sessionService.getSession.mockImplementation(() => {
+        throw new Error('Detailed error message')
+      })
+
+      const handlerInstance = controller.handler()
+      const result = (await handlerInstance.getSession({
+        params: { id: '550e8400-e29b-41d4-a716-446655440000' },
+        headers: {},
+      })) as GetSessionResponse
+
+      expect(result.status).toBe(500)
+      if (result.status === 500) {
+        expect(result.body).toHaveProperty('error', 'Detailed error message')
+      }
+    })
+
+    it('should hide error details in production mode', async () => {
+      // Ensure NODE_ENV is production (set in beforeEach)
+      process.env.NODE_ENV = 'production'
+
+      sessionService.getSession.mockImplementation(() => {
+        throw new Error('Sensitive error information')
+      })
+
+      const handlerInstance = controller.handler()
+      const result = (await handlerInstance.getSession({
+        params: { id: '550e8400-e29b-41d4-a716-446655440000' },
+        headers: {},
+      })) as GetSessionResponse
+
+      expect(result.status).toBe(500)
+      if (result.status === 500) {
+        expect(result.body).not.toHaveProperty('error')
+      }
+    })
+
+    it('should map complex error messages with multiple keywords', async () => {
+      sessionService.createSession.mockImplementation(() => {
+        throw new Error('Invalid input: working directory must be provided')
+      })
+
+      const handlerInstance = controller.handler()
+      const result = (await handlerInstance.createSession({
+        headers: {},
+        body: { workingDirectory: '' },
+      })) as CreateSessionResponse
+
+      // Should match "Invalid" first and return 400
+      expect(result.status).toBe(400)
+    })
+  })
 })

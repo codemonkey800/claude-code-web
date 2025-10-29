@@ -5,6 +5,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Test, TestingModule } from '@nestjs/testing'
 
 import { FileSystemService } from 'src/filesystem/filesystem.service'
+import { ClaudeCodeSubprocessService } from 'src/modules/claude-code/claude-code-subprocess.service'
 
 import { SessionService } from './session.service'
 
@@ -32,6 +33,14 @@ describe('SessionService', () => {
       emit: jest.fn(),
     }
 
+    const mockClaudeCodeService = {
+      initialize: jest.fn().mockResolvedValue(undefined),
+      shutdown: jest.fn().mockResolvedValue(undefined),
+      executeQuery: jest.fn(),
+      cancelQuery: jest.fn(),
+      getQueryState: jest.fn(),
+    }
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SessionService,
@@ -42,6 +51,10 @@ describe('SessionService', () => {
         {
           provide: EventEmitter2,
           useValue: mockEventEmitter,
+        },
+        {
+          provide: ClaudeCodeSubprocessService,
+          useValue: mockClaudeCodeService,
         },
       ],
     }).compile()

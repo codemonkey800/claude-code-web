@@ -13,6 +13,9 @@ export * from './types/session'
 // File system types - FileSystemNodeType, DirectoryEntry, FileEntry, FileSystemNode, etc.
 export * from './types/filesystem'
 
+// Claude Code types - ClaudeCodeQueryRequest, ClaudeCodeQueryState, ClaudeCodeQueryResult
+export * from './types/claude-code'
+
 // WebSocket event types - ClientToServerEvent, ServerToClientEvent, and all specific events
 export * from './types/websocket'
 
