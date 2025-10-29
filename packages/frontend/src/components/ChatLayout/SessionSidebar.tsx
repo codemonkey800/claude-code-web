@@ -39,21 +39,21 @@ function SessionItem({ session, isActive, onClick }: SessionItemProps) {
       onClick={onClick}
       className={`w-full text-left p-3 rounded-lg transition-colors ${
         isActive
-          ? 'bg-blue-50 border border-blue-200'
-          : 'hover:bg-gray-50 border border-transparent'
+          ? 'bg-blue-950 border border-blue-800'
+          : 'hover:bg-gray-800 border border-transparent'
       }`}
     >
       <div className="flex items-start gap-3">
         <Folder
           className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
-            isActive ? 'text-blue-600' : 'text-gray-400'
+            isActive ? 'text-blue-400' : 'text-gray-500'
           }`}
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p
               className={`text-sm font-medium truncate ${
-                isActive ? 'text-blue-900' : 'text-gray-900'
+                isActive ? 'text-blue-300' : 'text-gray-200'
               }`}
             >
               {workingDirectoryName}
@@ -62,7 +62,7 @@ function SessionItem({ session, isActive, onClick }: SessionItemProps) {
               className={`w-2 h-2 rounded-full flex-shrink-0 ${statusColor}`}
             />
           </div>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-400 mt-0.5">
             {formatRelativeTime(session.updatedAt)}
           </p>
         </div>
@@ -97,13 +97,13 @@ export function SessionSidebar({
   }
 
   return (
-    <aside className="w-80 h-full border-r border-gray-200 flex flex-col bg-white">
+    <aside className="w-80 h-full border-r border-gray-700 flex flex-col bg-gray-900">
       {/* Header with New Chat button */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-700">
         <button
           type="button"
           onClick={handleNewChatClick}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
           New Chat
@@ -118,8 +118,8 @@ export function SessionSidebar({
           </div>
         ) : sessions.length === 0 ? (
           <div className="text-center py-8 px-4">
-            <p className="text-sm text-gray-500">No sessions yet</p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-sm text-gray-400">No sessions yet</p>
+            <p className="text-xs text-gray-500 mt-1">
               Click "New Chat" to get started
             </p>
           </div>
@@ -139,8 +139,8 @@ export function SessionSidebar({
 
       {/* Footer - show only when data is loaded and we have sessions */}
       {!isLoading && sessions.length > 0 && (
-        <div className="p-4 border-t border-gray-200">
-          <div className="text-xs text-gray-500 text-center">
+        <div className="p-4 border-t border-gray-700">
+          <div className="text-xs text-gray-400 text-center">
             {sessions.length} {sessions.length === 1 ? 'session' : 'sessions'}
           </div>
         </div>

@@ -50,8 +50,8 @@ export function ChatView({ sessionId }: ChatViewProps) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <p className="text-lg text-red-600">Session not found</p>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-lg text-red-400">Session not found</p>
+          <p className="text-sm text-gray-400 mt-2">
             The session you're looking for doesn't exist
           </p>
         </div>
@@ -81,7 +81,7 @@ export function ChatView({ sessionId }: ChatViewProps) {
       </div>
 
       {/* Input at bottom */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-700">
         <div className="max-w-4xl mx-auto">
           <ChatInput
             placeholder="Send a message..."

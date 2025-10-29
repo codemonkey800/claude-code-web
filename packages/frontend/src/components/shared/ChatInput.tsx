@@ -41,7 +41,7 @@ export function ChatInput({
         placeholder={placeholder}
         disabled={disabled || isLoading}
         rows={1}
-        className="flex-1 resize-none rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+        className="flex-1 resize-none rounded-lg border border-gray-600 bg-gray-900 text-gray-100 placeholder:text-gray-500 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-800 disabled:cursor-not-allowed"
         style={{
           minHeight: '52px',
           maxHeight: '200px',
@@ -51,7 +51,7 @@ export function ChatInput({
         type="button"
         onClick={handleSubmit}
         disabled={isSubmitDisabled}
-        className="px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+        className="px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
         style={{
           minHeight: '52px',
         }}

@@ -12,15 +12,15 @@ export function StatusBadge({ status }: StatusBadgeProps) {
   const statusConfig = {
     [SessionStatus.INITIALIZING]: {
       label: 'Initializing',
-      className: 'bg-yellow-100 text-yellow-800',
+      className: 'bg-yellow-950 text-yellow-400',
     },
     [SessionStatus.ACTIVE]: {
       label: 'Active',
-      className: 'bg-green-100 text-green-800',
+      className: 'bg-green-950 text-green-400',
     },
     [SessionStatus.TERMINATED]: {
       label: 'Terminated',
-      className: 'bg-gray-100 text-gray-800',
+      className: 'bg-gray-800 text-gray-400',
     },
   }
 

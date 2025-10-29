@@ -17,11 +17,11 @@ export function ChatLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-gray-950">
       {/* Mobile: Overlay sidebar */}
       <div
         className={`
-          fixed inset-y-0 left-0 z-50 w-80 bg-white transform transition-transform duration-300 ease-in-out
+          fixed inset-y-0 left-0 z-50 w-80 bg-gray-900 transform transition-transform duration-300 ease-in-out
           lg:relative lg:translate-x-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
@@ -44,19 +44,19 @@ export function ChatLayout({
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile: Hamburger button */}
-        <div className="lg:hidden flex items-center p-4 border-b border-gray-200">
+        <div className="lg:hidden flex items-center p-4 border-b border-gray-700">
           <button
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
           >
             {sidebarOpen ? (
-              <X className="w-6 h-6 text-gray-600" />
+              <X className="w-6 h-6 text-gray-400" />
             ) : (
-              <Menu className="w-6 h-6 text-gray-600" />
+              <Menu className="w-6 h-6 text-gray-400" />
             )}
           </button>
-          <h1 className="ml-3 text-lg font-semibold text-gray-900">
+          <h1 className="ml-3 text-lg font-semibold text-gray-100">
             Claude Code Web
           </h1>
         </div>

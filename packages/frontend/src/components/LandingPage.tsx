@@ -65,14 +65,14 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
   const displayError = localError || error
 
   return (
-    <div className="animate-gradient flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-400 via-blue-400 to-teal-400 px-4">
+    <div className="animate-gradient flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-teal-900 px-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="animate-fade-in-up mb-8 text-center">
-          <h1 className="mb-2 text-4xl font-bold text-white drop-shadow-lg">
+          <h1 className="mb-2 text-4xl font-bold text-gray-100 drop-shadow-lg">
             Claude Code Web
           </h1>
-          <p className="text-lg text-white/90 drop-shadow">
+          <p className="text-lg text-gray-300 drop-shadow">
             Connect to your server
           </p>
         </div>
@@ -80,7 +80,7 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
         {/* Recent Connections */}
         {recents.length > 0 && (
           <div className="animate-fade-in-up mb-6">
-            <div className="mb-3 flex items-center gap-2 text-white/90">
+            <div className="mb-3 flex items-center gap-2 text-gray-300">
               <Clock className="h-4 w-4" />
               <h2 className="text-sm font-medium">Recent Connections</h2>
             </div>
@@ -88,7 +88,7 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
               {recents.map((recent, index) => (
                 <div
                   key={recent.url}
-                  className={`group flex items-center justify-between gap-3 rounded-lg border border-white/40 bg-white/80 px-4 py-3 shadow-lg shadow-blue-500/10 backdrop-blur-xl transition-all duration-300 hover:scale-[1.02] hover:border-white/60 hover:bg-white/90 hover:shadow-xl hover:shadow-blue-500/20 cursor-pointer animate-slide-in-left ${
+                  className={`group flex items-center justify-between gap-3 rounded-lg border border-gray-700 bg-gray-800/90 px-4 py-3 shadow-lg shadow-blue-500/10 backdrop-blur-xl transition-all duration-300 hover:scale-[1.02] hover:border-gray-600 hover:bg-gray-800 hover:shadow-xl hover:shadow-blue-500/20 cursor-pointer animate-slide-in-left ${
                     deletingUrl === recent.url ? 'animate-fade-out' : ''
                   }`}
                   style={{
@@ -97,10 +97,10 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
                   onClick={() => handleRecentClick(recent.url)}
                 >
                   <div className="flex-1 overflow-hidden">
-                    <p className="truncate text-sm font-medium text-gray-700">
+                    <p className="truncate text-sm font-medium text-gray-200">
                       {recent.url}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-400">
                       {new Date(recent.timestamp).toLocaleDateString(
                         undefined,
                         {
@@ -114,7 +114,7 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
                   </div>
                   <button
                     onClick={e => handleDeleteRecent(e, recent.url)}
-                    className="flex-shrink-0 rounded p-1 text-gray-400 opacity-0 transition-all duration-200 hover:bg-red-100 hover:text-red-600 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="flex-shrink-0 rounded p-1 text-gray-500 opacity-0 transition-all duration-200 hover:bg-red-900 hover:text-red-400 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500"
                     aria-label={`Delete ${recent.url}`}
                     type="button"
                   >
@@ -127,13 +127,13 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
         )}
 
         {/* Connection Form */}
-        <div className="animate-fade-in-up rounded-lg border border-white/40 bg-white/80 p-8 shadow-xl shadow-blue-500/10 backdrop-blur-xl">
+        <div className="animate-fade-in-up rounded-lg border border-gray-700 bg-gray-800/90 p-8 shadow-xl shadow-blue-500/10 backdrop-blur-xl">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Server URL Input */}
             <div>
               <label
                 htmlFor="serverUrl"
-                className="mb-2 block text-sm font-medium text-gray-700"
+                className="mb-2 block text-sm font-medium text-gray-200"
               >
                 Server URL
               </label>
@@ -144,7 +144,7 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
                 onChange={(e): void => setServerUrl(e.target.value)}
                 disabled={isConnecting}
                 placeholder="http://localhost:8081"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 transition-all duration-300 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:shadow-lg focus:shadow-blue-500/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-50"
+                className="w-full rounded-lg border border-gray-600 bg-gray-900 text-gray-100 px-4 py-2 placeholder:text-gray-500 transition-all duration-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:shadow-lg focus:shadow-blue-500/20 disabled:cursor-not-allowed disabled:bg-gray-800 disabled:opacity-50"
                 aria-invalid={!!displayError}
                 aria-describedby={displayError ? 'error-message' : undefined}
               />
@@ -155,9 +155,9 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
               <div
                 id="error-message"
                 role="alert"
-                className="animate-fade-in-up rounded-lg border border-red-200 bg-red-50 p-4"
+                className="animate-fade-in-up rounded-lg border border-red-800 bg-red-950 p-4"
               >
-                <p className="text-sm text-red-800">{displayError}</p>
+                <p className="text-sm text-red-400">{displayError}</p>
               </div>
             )}
 
@@ -165,7 +165,7 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
             <button
               type="submit"
               disabled={isConnecting || !serverUrl.trim()}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 px-6 py-3 font-medium text-white transition-all duration-300 hover:scale-105 hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition-all duration-300 hover:scale-105 hover:bg-blue-500 hover:shadow-lg hover:shadow-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
             >
               {isConnecting ? (
                 <>
@@ -181,7 +181,7 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
           {/* Connection Status Info */}
           {hasError && (
             <div className="mt-4 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-400">
                 Please check your server URL and try again
               </p>
             </div>

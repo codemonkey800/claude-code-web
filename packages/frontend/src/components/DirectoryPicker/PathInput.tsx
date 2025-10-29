@@ -67,10 +67,11 @@ export function PathInput({ value, onChange }: PathInputProps) {
           }
           className={`
             w-full px-3 py-2 pr-10 border rounded-md text-sm
+            bg-gray-800 text-gray-100 placeholder:text-gray-500
             focus:outline-none focus:ring-2 focus:ring-blue-500
             transition-colors
-            ${isError || data?.valid === false ? 'border-red-500 bg-red-50' : 'border-gray-300'}
-            ${data?.valid ? 'border-green-500 bg-green-50' : ''}
+            ${isError || data?.valid === false ? 'border-red-500 bg-red-950' : 'border-gray-600'}
+            ${data?.valid ? 'border-green-500 bg-green-950' : ''}
           `}
         />
 
@@ -84,13 +85,13 @@ export function PathInput({ value, onChange }: PathInputProps) {
           )}
           {!isPending && data?.valid && (
             <CheckCircle
-              className="w-4 h-4 text-green-500"
+              className="w-4 h-4 text-green-400"
               aria-label="Valid path"
             />
           )}
           {!isPending && (isError || data?.valid === false) && (
             <XCircle
-              className="w-4 h-4 text-red-500"
+              className="w-4 h-4 text-red-400"
               aria-label="Invalid path"
             />
           )}
@@ -99,12 +100,12 @@ export function PathInput({ value, onChange }: PathInputProps) {
 
       {/* Helper text or error message */}
       {data?.error && (
-        <p id="path-input-error" className="text-xs text-red-600" role="alert">
+        <p id="path-input-error" className="text-xs text-red-400" role="alert">
           {data.error}
         </p>
       )}
       {!data?.error && (
-        <p id="path-input-hint" className="text-xs text-gray-500">
+        <p id="path-input-hint" className="text-xs text-gray-400">
           Press Enter to apply or Escape to cancel
         </p>
       )}

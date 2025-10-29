@@ -73,8 +73,8 @@ export function DirectoryItem({
         style={{ paddingLeft: `${level * 16}px` }}
         className={`
           flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer
-          transition-colors hover:bg-gray-100
-          ${isSelected ? 'bg-blue-100 hover:bg-blue-200' : ''}
+          transition-colors hover:bg-gray-800
+          ${isSelected ? 'bg-blue-950 hover:bg-blue-900' : ''}
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset
         `}
       >
@@ -84,7 +84,7 @@ export function DirectoryItem({
             e.stopPropagation()
             onToggleExpand()
           }}
-          className="p-0.5 hover:bg-gray-200 rounded transition-colors flex-shrink-0"
+          className="p-0.5 hover:bg-gray-700 rounded transition-colors flex-shrink-0 text-gray-400"
           aria-label={isExpanded ? 'Collapse directory' : 'Expand directory'}
           tabIndex={-1}
         >
@@ -94,21 +94,23 @@ export function DirectoryItem({
         </button>
 
         {/* Folder icon */}
-        <Folder className="w-4 h-4 text-blue-500 flex-shrink-0" />
+        <Folder className="w-4 h-4 text-blue-400 flex-shrink-0" />
 
         {/* Directory name */}
-        <span className="flex-1 truncate text-sm">{directory.name}</span>
+        <span className="flex-1 truncate text-sm text-gray-200">
+          {directory.name}
+        </span>
 
         {/* Indicators */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Not readable indicator */}
           {!directory.metadata.isReadable && (
-            <Lock className="w-3 h-3 text-red-500" aria-label="Not readable" />
+            <Lock className="w-3 h-3 text-red-400" aria-label="Not readable" />
           )}
 
           {/* Item count (if available) */}
           {directory.itemCount !== undefined && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-400">
               ({directory.itemCount})
             </span>
           )}

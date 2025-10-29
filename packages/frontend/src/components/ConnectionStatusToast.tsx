@@ -38,15 +38,15 @@ export function ConnectionStatusToast() {
   const getToastStyles = (): string => {
     switch (connectionStatus) {
       case ConnectionStatus.CONNECTED:
-        return 'bg-green-100 border-green-500 text-green-900'
+        return 'bg-green-950 border-green-500 text-green-400'
       case ConnectionStatus.CONNECTING:
       case ConnectionStatus.RECONNECTING:
-        return 'bg-yellow-100 border-yellow-500 text-yellow-900'
+        return 'bg-yellow-950 border-yellow-500 text-yellow-400'
       case ConnectionStatus.ERROR:
       case ConnectionStatus.DISCONNECTED:
-        return 'bg-red-100 border-red-500 text-red-900'
+        return 'bg-red-950 border-red-500 text-red-400'
       default:
-        return 'bg-gray-100 border-gray-500 text-gray-900'
+        return 'bg-gray-800 border-gray-500 text-gray-400'
     }
   }
 

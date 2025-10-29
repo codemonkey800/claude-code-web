@@ -18,7 +18,7 @@ export function PathBreadcrumb({ path, onNavigate }: PathBreadcrumbProps) {
       {/* Root/Home button */}
       <button
         onClick={() => onNavigate('/')}
-        className="p-1 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+        className="p-1 hover:bg-gray-700 rounded transition-colors flex-shrink-0 text-gray-300"
         aria-label="Navigate to root directory"
         title="Root directory"
       >
@@ -40,9 +40,9 @@ export function PathBreadcrumb({ path, onNavigate }: PathBreadcrumbProps) {
             <button
               onClick={() => onNavigate(segmentPath)}
               className={`
-                px-2 py-1 rounded hover:bg-gray-100 transition-colors
+                px-2 py-1 rounded hover:bg-gray-700 transition-colors
                 truncate max-w-[120px]
-                ${isLast ? 'font-semibold text-gray-900' : 'text-gray-700'}
+                ${isLast ? 'font-semibold text-gray-100' : 'text-gray-300'}
               `}
               title={segment}
               aria-current={isLast ? 'location' : undefined}
