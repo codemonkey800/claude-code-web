@@ -125,7 +125,13 @@ describe('SessionService', () => {
       const payload = { workingDirectory: '/test/dir', metadata }
       const session = await service.createSession(payload)
 
-      expect(session.metadata).toEqual(metadata)
+      expect(session.metadata?.clientId).toBe(metadata.clientId)
+      expect(session.metadata?.tags).toEqual(metadata.tags)
+      expect(session.metadata?.description).toBe(metadata.description)
+      // Verify automatic metadata fields are also present
+      expect(session.metadata?.errorLog).toEqual([])
+      expect(session.metadata?.errorCount).toBe(0)
+      expect(session.metadata?.lastActivityAt).toBeInstanceOf(Date)
     })
 
     it('should increment session count', async () => {
@@ -155,7 +161,13 @@ describe('SessionService', () => {
 
       const retrievedSession = service.getSession(mockUuid)
 
-      expect(retrievedSession).toEqual(createdSession)
+      // getSession adds sessionDuration dynamically
+      expect(retrievedSession?.id).toBe(createdSession.id)
+      expect(retrievedSession?.status).toBe(createdSession.status)
+      expect(retrievedSession?.workingDirectory).toBe(
+        createdSession.workingDirectory,
+      )
+      expect(retrievedSession?.metadata?.sessionDuration).toBeDefined()
     })
 
     it('should return null for non-existent session', () => {
@@ -860,6 +872,341 @@ describe('SessionService', () => {
 
       await service.deleteSession(mockUuid2)
       expect(service.getSessionCount()).toBe(0)
+    })
+  })
+
+  describe('metadata tracking', () => {
+    describe('recordError', () => {
+      it('should record an error in the error log', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        const result = service.recordError(mockUuid, {
+          message: 'Test error',
+          code: 'TEST_ERROR',
+          context: 'test.context',
+          details: { foo: 'bar' },
+        })
+
+        expect(result).toBe(true)
+
+        const session = service.getSession(mockUuid)
+        expect(session?.metadata?.errorLog).toHaveLength(1)
+        expect(session?.metadata?.errorLog?.[0]).toMatchObject({
+          message: 'Test error',
+          code: 'TEST_ERROR',
+          context: 'test.context',
+          details: { foo: 'bar' },
+        })
+        expect(session?.metadata?.errorLog?.[0].timestamp).toBeInstanceOf(Date)
+      })
+
+      it('should increment error count', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        service.recordError(mockUuid, { message: 'Error 1' })
+        service.recordError(mockUuid, { message: 'Error 2' })
+        service.recordError(mockUuid, { message: 'Error 3' })
+
+        const session = service.getSession(mockUuid)
+        expect(session?.metadata?.errorCount).toBe(3)
+        expect(session?.metadata?.errorLog).toHaveLength(3)
+      })
+
+      it('should update lastErrorAt timestamp', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        const beforeError = new Date()
+        service.recordError(mockUuid, { message: 'Test error' })
+        const afterError = new Date()
+
+        const session = service.getSession(mockUuid)
+        expect(session?.metadata?.lastErrorAt).toBeInstanceOf(Date)
+        expect(
+          session?.metadata?.lastErrorAt?.getTime(),
+        ).toBeGreaterThanOrEqual(beforeError.getTime())
+        expect(session?.metadata?.lastErrorAt?.getTime()).toBeLessThanOrEqual(
+          afterError.getTime(),
+        )
+      })
+
+      it('should prune old errors when exceeding max size', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({
+          workingDirectory: '/test/dir',
+          metadata: {
+            configuration: {
+              maxErrorLogSize: 3,
+            },
+          },
+        })
+
+        // Add 5 errors (should keep only last 3)
+        service.recordError(mockUuid, { message: 'Error 1' })
+        service.recordError(mockUuid, { message: 'Error 2' })
+        service.recordError(mockUuid, { message: 'Error 3' })
+        service.recordError(mockUuid, { message: 'Error 4' })
+        service.recordError(mockUuid, { message: 'Error 5' })
+
+        const session = service.getSession(mockUuid)
+        expect(session?.metadata?.errorLog).toHaveLength(3)
+        expect(session?.metadata?.errorCount).toBe(5) // Total count should still be 5
+        // Should have kept the last 3 errors
+        expect(session?.metadata?.errorLog?.[0].message).toBe('Error 3')
+        expect(session?.metadata?.errorLog?.[1].message).toBe('Error 4')
+        expect(session?.metadata?.errorLog?.[2].message).toBe('Error 5')
+      })
+
+      it('should use default max size of 50 when not configured', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        // Add 52 errors
+        for (let i = 1; i <= 52; i++) {
+          service.recordError(mockUuid, { message: `Error ${i}` })
+        }
+
+        const session = service.getSession(mockUuid)
+        expect(session?.metadata?.errorLog).toHaveLength(50)
+        expect(session?.metadata?.errorCount).toBe(52)
+        // Should have kept errors 3-52
+        expect(session?.metadata?.errorLog?.[0].message).toBe('Error 3')
+        expect(session?.metadata?.errorLog?.[49].message).toBe('Error 52')
+      })
+
+      it('should return false for non-existent session', () => {
+        const nonExistentId = '550e8400-e29b-41d4-a716-446655440099'
+        const result = service.recordError(nonExistentId, {
+          message: 'Test error',
+        })
+
+        expect(result).toBe(false)
+      })
+
+      it('should update session updatedAt timestamp', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        const session = await service.createSession({
+          workingDirectory: '/test/dir',
+        })
+        const originalUpdatedAt = session.updatedAt
+
+        await sleep(10)
+
+        service.recordError(mockUuid, { message: 'Test error' })
+
+        const updatedSession = service.getSession(mockUuid)
+        expect(updatedSession?.updatedAt.getTime()).toBeGreaterThan(
+          originalUpdatedAt.getTime(),
+        )
+      })
+    })
+
+    describe('recordActivity', () => {
+      it('should update lastActivityAt timestamp', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        const session = await service.createSession({
+          workingDirectory: '/test/dir',
+        })
+        const originalActivityAt = session.metadata?.lastActivityAt
+
+        await sleep(10)
+
+        const result = service.recordActivity(mockUuid)
+
+        expect(result).toBe(true)
+
+        const updatedSession = service.getSession(mockUuid)
+        expect(updatedSession?.metadata?.lastActivityAt).toBeInstanceOf(Date)
+        expect(
+          updatedSession?.metadata?.lastActivityAt?.getTime(),
+        ).toBeGreaterThan(originalActivityAt?.getTime() ?? 0)
+      })
+
+      it('should update session updatedAt timestamp', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        const session = await service.createSession({
+          workingDirectory: '/test/dir',
+        })
+        const originalUpdatedAt = session.updatedAt
+
+        await sleep(10)
+
+        service.recordActivity(mockUuid)
+
+        const updatedSession = service.getSession(mockUuid)
+        expect(updatedSession?.updatedAt.getTime()).toBeGreaterThan(
+          originalUpdatedAt.getTime(),
+        )
+      })
+
+      it('should return false for non-existent session', () => {
+        const nonExistentId = '550e8400-e29b-41d4-a716-446655440099'
+        const result = service.recordActivity(nonExistentId)
+
+        expect(result).toBe(false)
+      })
+    })
+
+    describe('getSessionDuration', () => {
+      it('should calculate session duration in milliseconds', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        await sleep(50)
+
+        const duration = service.getSessionDuration(mockUuid)
+
+        expect(duration).not.toBeNull()
+        expect(duration).toBeGreaterThanOrEqual(50)
+        expect(duration).toBeLessThan(200) // Should be less than 200ms
+      })
+
+      it('should return null for non-existent session', () => {
+        const nonExistentId = '550e8400-e29b-41d4-a716-446655440099'
+        const duration = service.getSessionDuration(nonExistentId)
+
+        expect(duration).toBeNull()
+      })
+
+      it('should increase over time', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        const duration1 = service.getSessionDuration(mockUuid)
+        await sleep(50)
+        const duration2 = service.getSessionDuration(mockUuid)
+
+        expect(duration1).not.toBeNull()
+        expect(duration2).not.toBeNull()
+
+        if (duration1 !== null && duration2 !== null) {
+          expect(duration2).toBeGreaterThan(duration1)
+        }
+      })
+    })
+
+    describe('metadata initialization', () => {
+      it('should initialize errorLog as empty array on creation', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        const session = await service.createSession({
+          workingDirectory: '/test/dir',
+        })
+
+        expect(session.metadata?.errorLog).toEqual([])
+        expect(Array.isArray(session.metadata?.errorLog)).toBe(true)
+      })
+
+      it('should initialize errorCount as 0 on creation', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        const session = await service.createSession({
+          workingDirectory: '/test/dir',
+        })
+
+        expect(session.metadata?.errorCount).toBe(0)
+      })
+
+      it('should initialize lastActivityAt on creation', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        const beforeCreate = new Date()
+        const session = await service.createSession({
+          workingDirectory: '/test/dir',
+        })
+        const afterCreate = new Date()
+
+        expect(session.metadata?.lastActivityAt).toBeInstanceOf(Date)
+        expect(
+          session.metadata?.lastActivityAt?.getTime(),
+        ).toBeGreaterThanOrEqual(beforeCreate.getTime())
+        expect(session.metadata?.lastActivityAt?.getTime()).toBeLessThanOrEqual(
+          afterCreate.getTime(),
+        )
+      })
+
+      it('should preserve provided metadata when initializing', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        const session = await service.createSession({
+          workingDirectory: '/test/dir',
+          metadata: {
+            clientId: 'test-client',
+            tags: ['test'],
+            description: 'Test session',
+          },
+        })
+
+        expect(session.metadata?.clientId).toBe('test-client')
+        expect(session.metadata?.tags).toEqual(['test'])
+        expect(session.metadata?.description).toBe('Test session')
+        expect(session.metadata?.errorLog).toEqual([])
+        expect(session.metadata?.errorCount).toBe(0)
+        expect(session.metadata?.lastActivityAt).toBeInstanceOf(Date)
+      })
+    })
+
+    describe('getSession duration calculation', () => {
+      it('should include sessionDuration in returned session', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        await sleep(50)
+
+        const session = service.getSession(mockUuid)
+
+        expect(session?.metadata?.sessionDuration).toBeDefined()
+        expect(session?.metadata?.sessionDuration).toBeGreaterThanOrEqual(50)
+      })
+    })
+
+    describe('activity tracking integration', () => {
+      it('should track activity on status updates', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        const session = await service.createSession({
+          workingDirectory: '/test/dir',
+        })
+        const initialActivityAt = session.metadata?.lastActivityAt
+
+        await sleep(10)
+
+        service.updateSessionStatus(mockUuid, SessionStatus.ACTIVE)
+
+        const updatedSession = service.getSession(mockUuid)
+        expect(
+          updatedSession?.metadata?.lastActivityAt?.getTime(),
+        ).toBeGreaterThan(initialActivityAt?.getTime() ?? 0)
+      })
     })
   })
 })

@@ -16,6 +16,32 @@ export enum SessionStatus {
 }
 
 /**
+ * Structured error log entry for session errors
+ */
+export interface SessionError {
+  /** When the error occurred */
+  timestamp: Date
+  /** Human-readable error message */
+  message: string
+  /** Error code/type (e.g., 'FILESYSTEM_ERROR', 'PERMISSION_DENIED') */
+  code?: string
+  /** Where the error occurred (e.g., 'filesystem.browse', 'session.start') */
+  context?: string
+  /** Additional error details if available */
+  details?: unknown
+}
+
+/**
+ * Session configuration settings
+ */
+export interface SessionConfiguration {
+  /** Maximum number of errors to keep in the error log (default: 50) */
+  maxErrorLogSize?: number
+  /** Session considered idle after this many minutes of inactivity */
+  idleTimeoutMinutes?: number
+}
+
+/**
  * Optional metadata that can be attached to a session
  */
 export interface SessionMetadata {
@@ -25,6 +51,18 @@ export interface SessionMetadata {
   tags?: string[]
   /** Human-readable description of the session */
   description?: string
+  /** Recent error log entries */
+  errorLog?: SessionError[]
+  /** Total number of errors since session creation */
+  errorCount?: number
+  /** Timestamp of the most recent error */
+  lastErrorAt?: Date
+  /** Session configuration settings */
+  configuration?: SessionConfiguration
+  /** Timestamp of the last activity (for idle detection) */
+  lastActivityAt?: Date
+  /** Calculated session duration in milliseconds */
+  sessionDuration?: number
 }
 
 /**

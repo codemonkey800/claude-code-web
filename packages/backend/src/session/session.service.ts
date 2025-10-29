@@ -5,6 +5,7 @@ import {
   getErrorMessage,
   INTERNAL_EVENTS,
   type Session,
+  type SessionError,
   SessionStatus,
   sleep,
 } from '@claude-code-web/shared'
@@ -72,7 +73,12 @@ export class SessionService {
       workingDirectory: resolvedPath,
       createdAt: now,
       updatedAt: now,
-      metadata: payload.metadata,
+      metadata: {
+        ...payload.metadata,
+        errorLog: [],
+        errorCount: 0,
+        lastActivityAt: now,
+      },
     }
 
     this.sessions.set(sessionId, session)
@@ -85,6 +91,7 @@ export class SessionService {
 
   /**
    * Retrieves a session by its ID
+   * Calculates session duration dynamically
    * @param id - The session ID to retrieve
    * @returns The session if found, null otherwise
    */
@@ -94,6 +101,18 @@ export class SessionService {
     if (!session) {
       this.logger.warn(`Session not found: ${id}`)
       return null
+    }
+
+    // Calculate duration dynamically
+    const duration = this.getSessionDuration(id)
+    if (duration !== null) {
+      return {
+        ...session,
+        metadata: {
+          ...session.metadata,
+          sessionDuration: duration,
+        },
+      }
     }
 
     return session
@@ -137,6 +156,9 @@ export class SessionService {
     session.status = status
     session.updatedAt = new Date()
     this.sessions.set(id, session)
+
+    // Track activity
+    this.recordActivity(id)
 
     this.logger.log(`Updated session ${id} status: ${oldStatus} -> ${status}`)
 
@@ -293,6 +315,109 @@ export class SessionService {
       }
       return updated
     }
+  }
+
+  /**
+   * Records an error in the session's error log
+   * Automatically prunes old errors if the log exceeds the maximum size
+   * @param sessionId - The session ID to record the error for
+   * @param error - Error details to record
+   * @returns True if error was recorded, false if session not found
+   */
+  recordError(
+    sessionId: string,
+    error: Omit<SessionError, 'timestamp'>,
+  ): boolean {
+    const session = this.sessions.get(sessionId)
+
+    if (!session) {
+      this.logger.warn(`Cannot record error - session not found: ${sessionId}`)
+      return false
+    }
+
+    // Initialize metadata if not present
+    if (!session.metadata) {
+      session.metadata = {}
+    }
+
+    // Initialize error tracking fields
+    if (!session.metadata.errorLog) {
+      session.metadata.errorLog = []
+    }
+    if (session.metadata.errorCount === undefined) {
+      session.metadata.errorCount = 0
+    }
+
+    // Create error entry with timestamp
+    const errorEntry: SessionError = {
+      ...error,
+      timestamp: new Date(),
+    }
+
+    // Add to error log
+    session.metadata.errorLog.push(errorEntry)
+    session.metadata.errorCount += 1
+    session.metadata.lastErrorAt = errorEntry.timestamp
+
+    // Prune old errors if needed
+    const maxSize = session.metadata.configuration?.maxErrorLogSize ?? 50
+    if (session.metadata.errorLog.length > maxSize) {
+      // Remove oldest errors
+      session.metadata.errorLog = session.metadata.errorLog.slice(-maxSize)
+    }
+
+    // Update session timestamp
+    session.updatedAt = new Date()
+    this.sessions.set(sessionId, session)
+
+    this.logger.debug(
+      `Recorded error for session ${sessionId}: ${error.message} (${error.code || 'no code'})`,
+    )
+
+    return true
+  }
+
+  /**
+   * Records activity for a session by updating lastActivityAt timestamp
+   * @param sessionId - The session ID to record activity for
+   * @returns True if activity was recorded, false if session not found
+   */
+  recordActivity(sessionId: string): boolean {
+    const session = this.sessions.get(sessionId)
+
+    if (!session) {
+      this.logger.warn(
+        `Cannot record activity - session not found: ${sessionId}`,
+      )
+      return false
+    }
+
+    // Initialize metadata if not present
+    if (!session.metadata) {
+      session.metadata = {}
+    }
+
+    session.metadata.lastActivityAt = new Date()
+    session.updatedAt = new Date()
+    this.sessions.set(sessionId, session)
+
+    return true
+  }
+
+  /**
+   * Calculates the session duration in milliseconds
+   * @param sessionId - The session ID to calculate duration for
+   * @returns Duration in milliseconds, or null if session not found
+   */
+  getSessionDuration(sessionId: string): number | null {
+    const session = this.sessions.get(sessionId)
+
+    if (!session) {
+      return null
+    }
+
+    const now = new Date()
+    return now.getTime() - session.createdAt.getTime()
   }
 
   /**

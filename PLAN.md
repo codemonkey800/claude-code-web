@@ -166,19 +166,26 @@ Enhance the existing session management system with:
 
 ### 2.2 Session Metadata Enhancement
 
-- [ ] **Extend session metadata structure**
-  - Add `claudeCodeVersion` field (for future)
-  - Add `resourceUsage` object (memory, CPU placeholders)
-  - Add `commandHistory` array (last N commands)
-  - Add `errorLog` array (recent errors)
-  - Add `configuration` object (session settings)
+- [x] **Extend session metadata structure** (2025-10-28 21:56)
+  - ~~Add `claudeCodeVersion` field~~ (Deferred - not needed for Phase 2)
+  - ~~Add `resourceUsage` object~~ (Deferred - not needed for Phase 2)
+  - ~~Add `commandHistory` array~~ (Deferred - not needed for Phase 2)
+  - Add `errorLog` array (recent errors) ✓
+  - Add `configuration` object (session settings) ✓
+  - Add `SessionError` interface for structured error entries ✓
+  - Add `SessionConfiguration` interface for session settings ✓
+  - Extended SessionMetadata with tracking fields ✓
 
-- [ ] **Add metadata tracking**
-  - Track last activity timestamp
-  - Count total commands executed
-  - Record session duration
-  - Add peak resource usage
-  - Include error statistics
+- [x] **Add metadata tracking** (2025-10-28 21:56)
+  - Track last activity timestamp ✓ (`lastActivityAt`)
+  - ~~Count total commands executed~~ (Deferred - not needed for Phase 2)
+  - Record session duration ✓ (calculated dynamically via `getSessionDuration()`)
+  - ~~Add peak resource usage~~ (Deferred - not needed for Phase 2)
+  - Include error statistics ✓ (`errorCount`, `lastErrorAt`)
+  - Added `recordError()` method with automatic pruning (max 50 errors) ✓
+  - Added `recordActivity()` method for activity tracking ✓
+  - Integrated activity tracking into `updateSessionStatus()` ✓
+  - All methods comprehensively tested (20 new tests) ✓
 
 ### 2.3 Session Persistence Preparation
 
@@ -531,7 +538,52 @@ Enhance the existing session management system with:
 - Comprehensive test coverage: 6 state transition tests + event emission tests
 - Tests verify invalid transitions return `null` and don't emit events
 
+**2025-10-28 21:56 - Session Metadata Enhancement Implementation**
+
+- **Minimal Approach**: Focused on essential metadata tracking (error logs, configuration, activity)
+- **New Types Added** (`packages/shared/src/types/session.ts`):
+  - `SessionError` interface: timestamp, message, code, context, details
+  - `SessionConfiguration` interface: maxErrorLogSize (default 50), idleTimeoutMinutes
+  - Extended `SessionMetadata` with:
+    - `errorLog?: SessionError[]` - Recent errors with automatic pruning
+    - `errorCount?: number` - Total error count since creation
+    - `lastErrorAt?: Date` - Most recent error timestamp
+    - `configuration?: SessionConfiguration` - Session settings
+    - `lastActivityAt?: Date` - Activity tracking for idle detection
+    - `sessionDuration?: number` - Calculated dynamically
+- **Service Methods Added** (`packages/backend/src/session/session.service.ts`):
+  - `recordError(sessionId, error)` - Records errors, auto-prunes when exceeding max size
+  - `recordActivity(sessionId)` - Updates lastActivityAt timestamp
+  - `getSessionDuration(sessionId)` - Calculates duration from createdAt to now
+- **Automatic Initialization**: `createSession()` initializes errorLog=[], errorCount=0, lastActivityAt=now
+- **Dynamic Duration**: `getSession()` calculates and adds sessionDuration to response
+- **Activity Integration**: `updateSessionStatus()` automatically calls `recordActivity()`
+- **Test Coverage**: 20 new comprehensive tests covering all tracking functionality
+  - Error recording, incrementing, pruning (max size handling)
+  - Activity tracking and timestamp updates
+  - Duration calculation and increase over time
+  - Metadata initialization and preservation
+  - Integration with existing lifecycle methods
+- **All Tests Passing**: 69 total tests (49 existing + 20 new)
+- **Linting & Type-Checking**: All passed with fixes applied
+
 ### Deviations from Plan:
+
+#### Section 2.2 - Session Metadata Enhancement (2025-10-28)
+
+- **Minimal Approach Taken**: Deferred non-essential metadata fields
+  - Reason: Focus on error tracking and activity monitoring; avoid premature optimization
+  - Deferred fields:
+    - `claudeCodeVersion` - Not needed until Claude Code SDK integration
+    - `resourceUsage` (memory, CPU) - No monitoring infrastructure yet
+    - `commandHistory` - Too verbose, can add when Claude Code is integrated
+    - `peak resource usage` - Not relevant without real monitoring
+  - Essential fields implemented:
+    - Error tracking (`errorLog`, `errorCount`, `lastErrorAt`)
+    - Session configuration (`SessionConfiguration`)
+    - Activity tracking (`lastActivityAt`, `sessionDuration`)
+  - Benefits: Simpler implementation, easier to maintain, no unnecessary complexity
+  - Future-proof: Can easily add deferred fields when actually needed
 
 #### Section 2.3 - Session Persistence (2025-10-28)
 
@@ -580,6 +632,32 @@ Enhance the existing session management system with:
    - Once terminated, no transitions allowed
    - Prevents resurrection of dead sessions
    - Clean lifecycle management
+
+#### Session Metadata Enhancement (2025-10-28)
+
+1. **Automatic Error Pruning**: Implemented bounded error log with automatic cleanup
+   - Rationale: Prevent memory bloat from unlimited error accumulation
+   - Benefit: Error log size controlled by configuration (default 50)
+   - Implementation: Oldest errors removed when limit exceeded using `slice(-maxSize)`
+   - Total error count preserved separately from pruned log
+
+2. **Dynamic Duration Calculation**: Duration calculated on-demand vs stored
+   - Rationale: Avoids stale duration values and eliminates need for updates
+   - Benefit: Always accurate, no maintenance overhead
+   - Implementation: `getSession()` calculates duration from createdAt to now
+   - Performance: Negligible (simple timestamp subtraction)
+
+3. **Activity Tracking Integration**: Automatic activity recording on status changes
+   - Rationale: Ensure activity is tracked without manual calls everywhere
+   - Benefit: Consistent tracking, can't be forgotten
+   - Implementation: `updateSessionStatus()` calls `recordActivity()` automatically
+   - Future use: Idle session detection and cleanup
+
+4. **Structured Error Logging**: Rich error context with optional fields
+   - Rationale: Balance between useful debugging info and flexibility
+   - Benefit: Errors can include code, context, and arbitrary details
+   - Implementation: `SessionError` interface with timestamp, message, code, context, details
+   - Usage: Services can record errors with appropriate detail level
 
 ### Performance Observations:
 
