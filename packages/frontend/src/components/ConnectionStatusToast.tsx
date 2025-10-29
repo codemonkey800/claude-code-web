@@ -85,24 +85,25 @@ export function ConnectionStatusToast() {
   }
 
   const showCloseButton =
+    connectionStatus === ConnectionStatus.CONNECTED ||
     connectionStatus === ConnectionStatus.DISCONNECTED ||
     connectionStatus === ConnectionStatus.ERROR
 
   return (
     <Toast.Root
+      key={connectionStatus}
       open={open}
       onOpenChange={setOpen}
       duration={getDuration()}
       className={`
         ${getToastStyles()}
         rounded-lg border-2 p-4 shadow-lg
-        data-[state=open]:animate-in data-[state=open]:slide-in-from-right
-        data-[state=closed]:animate-out data-[state=closed]:fade-out
+        ${open ? 'animate-slide-in-right' : 'animate-slide-out-right'}
         data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]
         data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)]
       `}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         {getToastIcon()}
         <div className="flex-1">
           <Toast.Title className="font-semibold">
