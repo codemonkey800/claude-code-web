@@ -7,8 +7,9 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query'
 
-import { queries } from 'src/api/queryKeys'
+import { createQueries } from 'src/api/queryKeys'
 import { createSession } from 'src/api/sessions'
+import { useApi } from 'src/context/ApiContext'
 
 /**
  * Hook to fetch all sessions
@@ -17,7 +18,10 @@ import { createSession } from 'src/api/sessions'
  * @returns Query result with sessions data, loading state, and error
  */
 export function useSessions(): UseQueryResult<Session[], Error> {
-  return useQuery(queries.sessions.list)
+  const { apiFetch } = useApi()
+  const queries = createQueries(apiFetch)
+
+  return useQuery(queries.sessions.list())
 }
 
 /**
@@ -33,14 +37,15 @@ export function useCreateSession(): UseMutationResult<
   unknown
 > {
   const queryClient = useQueryClient()
+  const { apiFetch } = useApi()
 
   return useMutation({
     mutationFn: (payload?: CreateSessionPayload): Promise<Session> =>
-      createSession(payload),
+      createSession(apiFetch, payload),
     onSuccess: (): void => {
       // Invalidate and refetch sessions list after successful creation
       void queryClient.invalidateQueries({
-        queryKey: queries.sessions.list.queryKey,
+        queryKey: ['sessions', 'list'],
       })
     },
   })

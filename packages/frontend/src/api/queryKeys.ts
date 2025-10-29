@@ -1,20 +1,39 @@
-import { createQueryKeys, mergeQueryKeys } from '@lukemorales/query-key-factory'
+import type { DirectoryBrowseOptions } from '@claude-code-web/shared'
 
-import { fetchSessions } from './sessions'
+import { browseDirectory } from './filesystem'
+import { type ApiFetch, fetchSession, fetchSessions } from './sessions'
 
 /**
- * Query keys for session-related queries
- * Using @lukemorales/query-key-factory for type-safe key management
+ * Create query key factories for session-related queries
+ * These factories accept apiFetch and return query options
  */
-export const sessionsKeys = createQueryKeys('sessions', {
-  list: {
-    queryKey: null,
-    queryFn: fetchSessions,
-  },
+export const createSessionsQueries = (apiFetch: ApiFetch) => ({
+  list: () => ({
+    queryKey: ['sessions', 'list'] as const,
+    queryFn: () => fetchSessions(apiFetch),
+  }),
+  detail: (sessionId: string) => ({
+    queryKey: ['sessions', 'detail', sessionId] as const,
+    queryFn: () => fetchSession(apiFetch, sessionId),
+  }),
 })
 
 /**
- * Merged query keys for the entire application
- * Add more entity keys here as the app grows (e.g., todos, users, etc.)
+ * Create query key factories for filesystem-related queries
+ * These factories accept apiFetch and return query options
  */
-export const queries = mergeQueryKeys(sessionsKeys)
+export const createFilesystemQueries = (apiFetch: ApiFetch) => ({
+  browse: (path: string, options?: DirectoryBrowseOptions) => ({
+    queryKey: ['filesystem', 'browse', { path, options }] as const,
+    queryFn: () => browseDirectory(apiFetch, path, options),
+  }),
+})
+
+/**
+ * Create all query factories with the provided apiFetch function
+ * This should be called in hooks that need to access queries
+ */
+export const createQueries = (apiFetch: ApiFetch) => ({
+  sessions: createSessionsQueries(apiFetch),
+  filesystem: createFilesystemQueries(apiFetch),
+})

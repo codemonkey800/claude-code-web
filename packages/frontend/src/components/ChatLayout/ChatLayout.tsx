@@ -1,0 +1,68 @@
+import { Menu, X } from 'lucide-react'
+import { useState } from 'react'
+
+import { ChatView } from 'src/components/ChatView/ChatView'
+
+import { SessionSidebar } from './SessionSidebar'
+
+interface ChatLayoutProps {
+  activeSessionId: string | null
+  onSessionChange: (sessionId: string | null) => void
+}
+
+export function ChatLayout({
+  activeSessionId,
+  onSessionChange,
+}: ChatLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  return (
+    <div className="flex h-screen bg-white">
+      {/* Mobile: Overlay sidebar */}
+      <div
+        className={`
+          fixed inset-y-0 left-0 z-50 w-80 bg-white transform transition-transform duration-300 ease-in-out
+          lg:relative lg:translate-x-0
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        <SessionSidebar
+          activeSessionId={activeSessionId}
+          onSessionChange={onSessionChange}
+          onClose={() => setSidebarOpen(false)}
+        />
+      </div>
+
+      {/* Backdrop for mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main content */}
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile: Hamburger button */}
+        <div className="lg:hidden flex items-center p-4 border-b border-gray-200">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            {sidebarOpen ? (
+              <X className="w-6 h-6 text-gray-600" />
+            ) : (
+              <Menu className="w-6 h-6 text-gray-600" />
+            )}
+          </button>
+          <h1 className="ml-3 text-lg font-semibold text-gray-900">
+            Claude Code Web
+          </h1>
+        </div>
+
+        <ChatView sessionId={activeSessionId} />
+      </main>
+    </div>
+  )
+}
