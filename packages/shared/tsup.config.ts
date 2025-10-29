@@ -4,8 +4,8 @@ export default defineConfig({
   // Entry point
   entry: ['src/index.ts'],
 
-  // ESM only - simpler and modern
-  format: ['esm'],
+  // Output both ESM and CommonJS for compatibility
+  format: ['esm', 'cjs'],
 
   // Generate TypeScript declarations with explicit tsconfig
   dts: {
