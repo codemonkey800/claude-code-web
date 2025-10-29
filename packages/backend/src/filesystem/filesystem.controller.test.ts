@@ -1,5 +1,3 @@
-import type { IncomingHttpHeaders } from 'node:http'
-
 import {
   type DirectoryBrowseResponse,
   type FileEntry,

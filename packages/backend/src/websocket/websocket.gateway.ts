@@ -2,8 +2,6 @@ import {
   ERROR_CODES,
   type ErrorEvent,
   INTERNAL_EVENTS,
-  type MessageEvent,
-  type MessageResponseEvent,
   type PingEvent,
   type PongEvent,
   type Session,
@@ -120,29 +118,6 @@ export class AppWebSocketGateway
 
     client.emit(WS_EVENTS.PONG, pongEvent)
     this.logger.debug(`Sent pong to client: ${client.id}`)
-  }
-
-  /**
-   * Handle message events from clients (deprecated - use handleSessionMessage)
-   * Echoes the message back with echo flag set to true
-   * @deprecated Use handleSessionMessage for session-scoped messaging
-   */
-  @SubscribeMessage(WS_EVENTS.MESSAGE)
-  handleMessage(client: Socket, data: MessageEvent): void {
-    this.logger.debug(`Received message from client: ${client.id}`)
-
-    const response: MessageResponseEvent = {
-      type: WS_EVENTS.MESSAGE,
-      timestamp: new Date().toISOString(),
-      id: data.id,
-      payload: {
-        content: data.payload.content,
-        echo: true,
-      },
-    }
-
-    client.emit(WS_EVENTS.MESSAGE, response)
-    this.logger.debug(`Sent echo response to client: ${client.id}`)
   }
 
   /**
@@ -366,38 +341,6 @@ export class AppWebSocketGateway
     this.sessionRooms.delete(sessionId)
     this.logger.log(
       `Removed ${sockets.size} clients from deleted session ${sessionId}`,
-    )
-  }
-
-  /**
-   * Handle session status update events from REST API
-   * Broadcasts status change to all clients in the session
-   */
-  @OnEvent(INTERNAL_EVENTS.SESSION_UPDATED)
-  handleSessionUpdated(payload: { sessionId: string; session: Session }): void {
-    const { sessionId, session } = payload
-
-    this.logger.debug(`Session ${sessionId} updated, notifying clients`)
-
-    const sockets = this.sessionRooms.get(sessionId)
-    if (!sockets || sockets.size === 0) {
-      this.logger.debug(`No clients in updated session ${sessionId}`)
-      return
-    }
-
-    // Broadcast status update to all clients in room
-    const statusUpdateEvent: SessionStatusUpdateEvent = {
-      type: WS_EVENTS.SESSION_STATUS,
-      timestamp: new Date().toISOString(),
-      payload: {
-        sessionId,
-        session,
-      },
-    }
-
-    this.server.to(sessionId).emit(WS_EVENTS.SESSION_STATUS, statusUpdateEvent)
-    this.logger.debug(
-      `Broadcast status update to ${sockets.size} clients in session ${sessionId}`,
     )
   }
 

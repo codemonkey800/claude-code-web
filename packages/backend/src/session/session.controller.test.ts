@@ -1,5 +1,3 @@
-import type { IncomingHttpHeaders } from 'node:http'
-
 import {
   type Session,
   type SessionMetadata,
@@ -54,9 +52,6 @@ describe('SessionController', () => {
   let controller: SessionController
   let sessionService: jest.Mocked<SessionService>
 
-  // Mock headers for requests
-  const mockHeaders: IncomingHttpHeaders = {}
-
   // Helper to create a mock session
   const createMockSession = (overrides?: Partial<Session>): Session => ({
     id: '550e8400-e29b-41d4-a716-446655440000',
@@ -100,7 +95,7 @@ describe('SessionController', () => {
 
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.createSession({
-        headers: mockHeaders,
+        headers: {},
         body: { workingDirectory: '/test/dir' },
       })) as CreateSessionResponse
 
@@ -120,7 +115,7 @@ describe('SessionController', () => {
 
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.createSession({
-        headers: mockHeaders,
+        headers: {},
         body: { workingDirectory: '/test/dir' },
       })) as CreateSessionResponse
 
@@ -140,7 +135,7 @@ describe('SessionController', () => {
 
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.createSession({
-        headers: mockHeaders,
+        headers: {},
         body: { workingDirectory: '/test/dir' },
       })) as CreateSessionResponse
 
@@ -167,7 +162,7 @@ describe('SessionController', () => {
 
       const handlerInstance = controller.handler()
       await handlerInstance.createSession({
-        headers: mockHeaders,
+        headers: {},
         body: payload,
       })
 
@@ -188,7 +183,7 @@ describe('SessionController', () => {
 
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.getAllSessions({
-        headers: mockHeaders,
+        headers: {},
       })) as GetAllSessionsResponse
 
       expect(result.status).toBe(200)
@@ -208,7 +203,7 @@ describe('SessionController', () => {
 
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.getAllSessions({
-        headers: mockHeaders,
+        headers: {},
       })) as GetAllSessionsResponse
 
       expect(result.status).toBe(200)
@@ -227,7 +222,7 @@ describe('SessionController', () => {
 
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.getAllSessions({
-        headers: mockHeaders,
+        headers: {},
       })) as GetAllSessionsResponse
 
       expect(result.status).toBe(500)
@@ -247,7 +242,7 @@ describe('SessionController', () => {
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.getSession({
         params: { id: mockSession.id },
-        headers: mockHeaders,
+        headers: {},
       })) as GetSessionResponse
 
       expect(result.status).toBe(200)
@@ -264,7 +259,7 @@ describe('SessionController', () => {
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.getSession({
         params: { id: '550e8400-e29b-41d4-a716-446655440099' },
-        headers: mockHeaders,
+        headers: {},
       })) as GetSessionResponse
 
       expect(result.status).toBe(404)
@@ -283,7 +278,7 @@ describe('SessionController', () => {
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.getSession({
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
-        headers: mockHeaders,
+        headers: {},
       })) as GetSessionResponse
 
       expect(result.status).toBe(500)
@@ -303,7 +298,7 @@ describe('SessionController', () => {
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.updateSessionStatus({
         params: { id: mockSession.id },
-        headers: mockHeaders,
+        headers: {},
         body: { status: SessionStatus.ACTIVE },
       })) as UpdateSessionResponse
 
@@ -324,7 +319,7 @@ describe('SessionController', () => {
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.updateSessionStatus({
         params: { id: '550e8400-e29b-41d4-a716-446655440099' },
-        headers: mockHeaders,
+        headers: {},
         body: { status: SessionStatus.ACTIVE },
       })) as UpdateSessionResponse
 
@@ -344,7 +339,7 @@ describe('SessionController', () => {
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.updateSessionStatus({
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
-        headers: mockHeaders,
+        headers: {},
         body: { status: SessionStatus.ACTIVE },
       })) as UpdateSessionResponse
 
@@ -376,7 +371,7 @@ describe('SessionController', () => {
 
         const result = (await handlerInstance.updateSessionStatus({
           params: { id: mockSession.id },
-          headers: mockHeaders,
+          headers: {},
           body: { status },
         })) as UpdateSessionResponse
 
@@ -395,7 +390,7 @@ describe('SessionController', () => {
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.deleteSession({
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
-        headers: mockHeaders,
+        headers: {},
         body: null,
       })) as DeleteSessionResponse
 
@@ -415,7 +410,7 @@ describe('SessionController', () => {
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.deleteSession({
         params: { id: '550e8400-e29b-41d4-a716-446655440099' },
-        headers: mockHeaders,
+        headers: {},
         body: null,
       })) as DeleteSessionResponse
 
@@ -435,7 +430,7 @@ describe('SessionController', () => {
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.deleteSession({
         params: { id: '550e8400-e29b-41d4-a716-446655440000' },
-        headers: mockHeaders,
+        headers: {},
         body: null,
       })) as DeleteSessionResponse
 
@@ -456,7 +451,7 @@ describe('SessionController', () => {
       // Test serialization through the createSession endpoint
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.createSession({
-        headers: mockHeaders,
+        headers: {},
         body: { workingDirectory: '/test/dir' },
       })) as CreateSessionResponse
 
@@ -483,7 +478,7 @@ describe('SessionController', () => {
       const handlerInstance = controller.handler()
       const result = (await handlerInstance.getSession({
         params: { id: mockSession.id },
-        headers: mockHeaders,
+        headers: {},
       })) as GetSessionResponse
 
       expect(result.status).toBe(200)

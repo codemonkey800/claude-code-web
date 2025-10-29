@@ -606,67 +606,6 @@ describe('AppWebSocketGateway', () => {
     })
   })
 
-  describe('Event Listeners - Session Updated (handleSessionUpdated)', () => {
-    it("should broadcast 'session:status' event to room", () => {
-      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
-      const session = createMockSession({
-        id: sessionId,
-        status: SessionStatus.ACTIVE,
-      })
-
-      const sessionRooms = gateway['sessionRooms']
-      sessionRooms.set(sessionId, new Set(['client-1']))
-
-      gateway.handleSessionUpdated({ sessionId, session })
-
-      expect(mockServer.to).toHaveBeenCalledWith(sessionId)
-      const roomEmit = getRoomEmit()
-      expect(roomEmit).toHaveBeenCalledWith(
-        WS_EVENTS.SESSION_STATUS,
-        expect.objectContaining({
-          type: WS_EVENTS.SESSION_STATUS,
-          payload: { sessionId, session },
-        }),
-      )
-    })
-
-    it('should include updated session data in event', () => {
-      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
-      const session = createMockSession({
-        id: sessionId,
-        status: SessionStatus.TERMINATED,
-      })
-
-      const sessionRooms = gateway['sessionRooms']
-      sessionRooms.set(sessionId, new Set(['client-1']))
-
-      gateway.handleSessionUpdated({ sessionId, session })
-
-      const roomEmit = getRoomEmit()
-      expect(roomEmit).toHaveBeenCalledWith(
-        WS_EVENTS.SESSION_STATUS,
-        expect.objectContaining({
-          payload: {
-            sessionId,
-            session,
-          },
-        }),
-      )
-    })
-
-    it('should handle update for session with no clients', () => {
-      const sessionId = '550e8400-e29b-41d4-a716-446655440000'
-      const session = createMockSession({ id: sessionId })
-
-      // No clients in the session room
-      expect(() => {
-        gateway.handleSessionUpdated({ sessionId, session })
-      }).not.toThrow()
-
-      expect(mockServer.to).not.toHaveBeenCalled()
-    })
-  })
-
   describe('Ping/Pong', () => {
     it('should respond to ping with pong', () => {
       const mockClient = createMockSocket('client-1')
@@ -700,52 +639,6 @@ describe('AppWebSocketGateway', () => {
         WS_EVENTS.PONG,
         expect.objectContaining({
           id: correlationId,
-        }),
-      )
-    })
-  })
-
-  describe('Message Echo (deprecated functionality)', () => {
-    it('should echo messages back to sender', () => {
-      const mockClient = createMockSocket('client-1')
-      const content = 'Test message'
-
-      gateway.handleMessage(mockClient as unknown as Socket, {
-        type: WS_EVENTS.MESSAGE,
-        timestamp: new Date().toISOString(),
-        id: 'msg-123',
-        payload: { content },
-      })
-
-      expect(mockClient.emit).toHaveBeenCalledWith(
-        WS_EVENTS.MESSAGE,
-        expect.objectContaining({
-          type: WS_EVENTS.MESSAGE,
-          id: 'msg-123',
-          payload: {
-            content,
-            echo: true,
-          },
-        }),
-      )
-    })
-
-    it('should mark echo responses with echo flag', () => {
-      const mockClient = createMockSocket('client-1')
-
-      gateway.handleMessage(mockClient as unknown as Socket, {
-        type: WS_EVENTS.MESSAGE,
-        timestamp: new Date().toISOString(),
-        payload: { content: 'Hello' },
-      })
-
-      expect(mockClient.emit).toHaveBeenCalledWith(
-        WS_EVENTS.MESSAGE,
-        expect.objectContaining({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          payload: expect.objectContaining({
-            echo: true,
-          }),
         }),
       )
     })

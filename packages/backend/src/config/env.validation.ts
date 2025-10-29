@@ -23,14 +23,6 @@ enum Environment {
   Test = 'test',
 }
 
-enum LogLevel {
-  Log = 'log',
-  Error = 'error',
-  Warn = 'warn',
-  Debug = 'debug',
-  Verbose = 'verbose',
-}
-
 export class EnvironmentVariables {
   @IsEnum(Environment)
   NODE_ENV: Environment = Environment.Development
@@ -40,10 +32,6 @@ export class EnvironmentVariables {
 
   @IsUrl({ require_tld: false })
   FRONTEND_URL: string = 'http://localhost:8080'
-
-  @IsOptional()
-  @IsEnum(LogLevel)
-  LOG_LEVEL?: LogLevel
 
   @IsOptional()
   @IsNumber()
