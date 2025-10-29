@@ -36,18 +36,20 @@ export function LandingPage() {
   const displayError = localError || error
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
+    <div className="animate-gradient flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-400 via-blue-400 to-teal-400 px-4">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-4xl font-bold text-gray-900">
+        <div className="animate-fade-in-up mb-8 text-center">
+          <h1 className="mb-2 text-4xl font-bold text-white drop-shadow-lg">
             Claude Code Web
           </h1>
-          <p className="text-lg text-gray-600">Connect to your server</p>
+          <p className="text-lg text-white/90 drop-shadow">
+            Connect to your server
+          </p>
         </div>
 
         {/* Connection Form */}
-        <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-md">
+        <div className="animate-fade-in-up rounded-lg border border-white/40 bg-white/80 p-8 shadow-xl shadow-blue-500/10 backdrop-blur-xl">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Server URL Input */}
             <div>
@@ -64,7 +66,7 @@ export function LandingPage() {
                 onChange={(e): void => setServerUrl(e.target.value)}
                 disabled={isConnecting}
                 placeholder="http://localhost:8081"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-50"
+                className="w-full rounded-lg border border-gray-300 px-4 py-2 transition-all duration-300 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:shadow-lg focus:shadow-blue-500/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-50"
                 aria-invalid={!!displayError}
                 aria-describedby={displayError ? 'error-message' : undefined}
               />
@@ -75,7 +77,7 @@ export function LandingPage() {
               <div
                 id="error-message"
                 role="alert"
-                className="rounded-lg border border-red-200 bg-red-50 p-4"
+                className="animate-fade-in-up rounded-lg border border-red-200 bg-red-50 p-4"
               >
                 <p className="text-sm text-red-800">{displayError}</p>
               </div>
@@ -85,7 +87,7 @@ export function LandingPage() {
             <button
               type="submit"
               disabled={isConnecting || !serverUrl.trim()}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 px-6 py-3 font-medium text-white transition-all duration-300 hover:scale-105 hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
             >
               {isConnecting ? (
                 <>
