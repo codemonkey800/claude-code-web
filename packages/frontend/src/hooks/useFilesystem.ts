@@ -10,6 +10,23 @@ import { createQueries } from 'src/api/queryKeys'
 import { useApi } from 'src/context/ApiContext'
 
 /**
+ * Hook to fetch file system configuration
+ * Configuration is cached indefinitely as it doesn't change during runtime
+ *
+ * @returns Query result with filesystem config including allowed base directory
+ */
+export function useFilesystemConfig() {
+  const { apiFetch } = useApi()
+  const queries = createQueries(apiFetch)
+
+  return useQuery({
+    ...queries.filesystem.config(),
+    staleTime: Number.POSITIVE_INFINITY, // Config never goes stale
+    gcTime: Number.POSITIVE_INFINITY, // Keep in cache forever
+  })
+}
+
+/**
  * Hook to browse a directory with React Query
  * Automatically handles caching, refetching, and error states
  *

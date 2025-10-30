@@ -67,6 +67,16 @@ export class FileSystemService {
   }
 
   /**
+   * Get file system configuration
+   * @returns File system configuration including allowed base directory
+   */
+  getConfig(): { allowedBaseDir: string } {
+    return {
+      allowedBaseDir: this.config.allowedBaseDir,
+    }
+  }
+
+  /**
    * Browse a directory and return paginated contents
    * @param path - Directory path to browse
    * @param options - Browse options (pagination, sorting, filters)

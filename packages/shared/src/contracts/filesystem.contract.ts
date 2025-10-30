@@ -54,6 +54,24 @@ export const directoryBrowseResponseApiSchema = z.object({
  */
 export const fileSystemContract = c.router({
   /**
+   * Get file system configuration
+   * GET /filesystem/config
+   */
+  getConfig: {
+    method: 'GET',
+    path: '/filesystem/config',
+    responses: {
+      200: z.object({
+        allowedBaseDir: z.string().min(1),
+      }),
+      500: z.object({
+        message: z.string(),
+      }),
+    },
+    summary: 'Get file system configuration including allowed base directory',
+  },
+
+  /**
    * Browse a directory and list its contents
    * GET /filesystem/browse
    */

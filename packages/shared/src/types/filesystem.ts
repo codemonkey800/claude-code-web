@@ -157,3 +157,11 @@ export interface ValidatePathResponse {
   /** File metadata if valid */
   metadata?: FileMetadata
 }
+
+/**
+ * File system configuration
+ */
+export interface FileSystemConfig {
+  /** Allowed base directory for file system operations (resolved absolute path) */
+  allowedBaseDir: string
+}

@@ -1,11 +1,37 @@
 import type {
   DirectoryBrowseOptions,
   DirectoryBrowseResponse,
+  FileSystemConfig,
   ValidatePathPayload,
   ValidatePathResponse,
 } from '@claude-code-web/shared'
 
 import type { ApiFetch } from './sessions'
+
+/**
+ * Get file system configuration
+ * @param apiFetch - Configured fetch function from ApiContext
+ * @returns Promise resolving to file system configuration
+ * @throws Error if the request fails
+ */
+export async function getFilesystemConfig(
+  apiFetch: ApiFetch,
+): Promise<FileSystemConfig> {
+  const response = await apiFetch('/filesystem/config')
+
+  if (!response.ok) {
+    const error: { message?: string } = (await response
+      .json()
+      .catch(() => ({
+        message: 'Failed to get filesystem configuration',
+      }))) as {
+      message?: string
+    }
+    throw new Error(error.message ?? 'Failed to get filesystem configuration')
+  }
+
+  return response.json() as Promise<FileSystemConfig>
+}
 
 /**
  * Browse a directory and list its contents

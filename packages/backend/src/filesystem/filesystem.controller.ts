@@ -111,6 +111,28 @@ export class FileSystemController {
   handler(): ReturnType<typeof tsRestHandler<typeof fileSystemContract>> {
     return tsRestHandler(fileSystemContract, {
       /**
+       * Get file system configuration
+       * GET /filesystem/config
+       */
+      getConfig: () => {
+        try {
+          this.logger.debug('Getting file system configuration')
+
+          const config = this.fileSystemService.getConfig()
+
+          return {
+            status: HttpStatus.OK,
+            body: config,
+          }
+        } catch (error) {
+          return this.handleError(
+            'Failed to get file system configuration',
+            error,
+          )
+        }
+      },
+
+      /**
        * Browse a directory and list its contents
        * GET /filesystem/browse
        */

@@ -1,6 +1,6 @@
 import type { DirectoryBrowseOptions } from '@claude-code-web/shared'
 
-import { browseDirectory } from './filesystem'
+import { browseDirectory, getFilesystemConfig } from './filesystem'
 import { type ApiFetch, fetchSession, fetchSessions } from './sessions'
 
 /**
@@ -23,6 +23,10 @@ export const createSessionsQueries = (apiFetch: ApiFetch) => ({
  * These factories accept apiFetch and return query options
  */
 export const createFilesystemQueries = (apiFetch: ApiFetch) => ({
+  config: () => ({
+    queryKey: ['filesystem', 'config'] as const,
+    queryFn: () => getFilesystemConfig(apiFetch),
+  }),
   browse: (path: string, options?: DirectoryBrowseOptions) => ({
     queryKey: ['filesystem', 'browse', { path, options }] as const,
     queryFn: () => browseDirectory(apiFetch, path, options),
