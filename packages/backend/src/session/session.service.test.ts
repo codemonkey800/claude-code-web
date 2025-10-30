@@ -36,7 +36,12 @@ describe('SessionService', () => {
     const mockClaudeCodeService = {
       initialize: jest.fn().mockResolvedValue(undefined),
       shutdown: jest.fn().mockResolvedValue(undefined),
-      executeQuery: jest.fn(),
+      executeQuery: jest.fn().mockResolvedValue({
+        queryId: 'mock-query-id',
+        sessionId: 'mock-session-id',
+        status: 'success',
+        duration: 1000,
+      }),
       cancelQuery: jest.fn(),
       getQueryState: jest.fn(),
     }
@@ -1467,6 +1472,230 @@ describe('SessionService', () => {
         const session = service.getSession(mockUuid)
         expect(session?.messages).toBeDefined()
         expect(Array.isArray(session?.messages)).toBe(true)
+      })
+    })
+
+    describe('sendQuery user prompt storage', () => {
+      it('should store user prompt message when sending query', async () => {
+        const mockSessionUuid = '550e8400-e29b-41d4-a716-446655440000'
+        const mockMessageUuid = '660e8400-e29b-41d4-a716-446655440001'
+        ;(randomUUID as jest.Mock)
+          .mockReturnValueOnce(mockSessionUuid)
+          .mockReturnValueOnce(mockMessageUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+        await service.startSession(mockSessionUuid)
+
+        await service.sendQuery(mockSessionUuid, {
+          prompt: 'Test user prompt',
+        })
+
+        const session = service.getSession(mockSessionUuid)
+        expect(session?.messages).toHaveLength(1)
+        expect(session?.messages?.[0]).toMatchObject({
+          type: 'user_prompt',
+          message: {
+            role: 'user',
+            content: 'Test user prompt',
+          },
+          session_id: mockSessionUuid,
+          uuid: mockMessageUuid,
+        })
+        expect(session?.messages?.[0].timestamp).toBeDefined()
+      })
+
+      it('should store user prompts with proper ClaudeUserPromptMessage structure', async () => {
+        const mockSessionUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockSessionUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+        await service.startSession(mockSessionUuid)
+
+        await service.sendQuery(mockSessionUuid, {
+          prompt: 'Hello, Claude!',
+        })
+
+        const session = service.getSession(mockSessionUuid)
+        const userMessage = session?.messages?.[0] as {
+          type: string
+          message: { role: string; content: string }
+          timestamp: string
+          session_id?: string
+          uuid?: string
+        }
+
+        expect(userMessage).toBeDefined()
+        expect(userMessage?.type).toBe('user_prompt')
+        expect(userMessage?.message?.role).toBe('user')
+        expect(userMessage?.message?.content).toBe('Hello, Claude!')
+        expect(userMessage?.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+        expect(userMessage?.session_id).toBe(mockSessionUuid)
+        expect(userMessage?.uuid).toBeDefined()
+      })
+
+      it('should store multiple user prompts in order', async () => {
+        const mockSessionUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockSessionUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+        await service.startSession(mockSessionUuid)
+
+        await service.sendQuery(mockSessionUuid, { prompt: 'First query' })
+        await service.sendQuery(mockSessionUuid, { prompt: 'Second query' })
+        await service.sendQuery(mockSessionUuid, { prompt: 'Third query' })
+
+        const session = service.getSession(mockSessionUuid)
+        expect(session?.messages).toHaveLength(3)
+        expect(
+          (
+            session?.messages?.[0] as {
+              message: { content: string }
+            }
+          ).message?.content,
+        ).toBe('First query')
+        expect(
+          (
+            session?.messages?.[1] as {
+              message: { content: string }
+            }
+          ).message?.content,
+        ).toBe('Second query')
+        expect(
+          (
+            session?.messages?.[2] as {
+              message: { content: string }
+            }
+          ).message?.content,
+        ).toBe('Third query')
+      })
+
+      it('should prune user prompts when exceeding maxMessageHistory', async () => {
+        const mockSessionUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockSessionUuid)
+
+        await service.createSession({
+          workingDirectory: '/test/dir',
+          metadata: {
+            configuration: {
+              maxMessageHistory: 3,
+            },
+          },
+        })
+        await service.startSession(mockSessionUuid)
+
+        // Send 5 queries (should keep only last 3)
+        for (let i = 1; i <= 5; i++) {
+          await service.sendQuery(mockSessionUuid, {
+            prompt: `Query ${i}`,
+          })
+        }
+
+        const session = service.getSession(mockSessionUuid)
+        expect(session?.messages).toHaveLength(3)
+        expect(
+          (
+            session?.messages?.[0] as {
+              message: { content: string }
+            }
+          ).message?.content,
+        ).toBe('Query 3')
+        expect(
+          (
+            session?.messages?.[1] as {
+              message: { content: string }
+            }
+          ).message?.content,
+        ).toBe('Query 4')
+        expect(
+          (
+            session?.messages?.[2] as {
+              message: { content: string }
+            }
+          ).message?.content,
+        ).toBe('Query 5')
+      })
+
+      it('should not emit event for user prompt (no WebSocket broadcast)', async () => {
+        const mockSessionUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockSessionUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+        await service.startSession(mockSessionUuid)
+
+        // Clear any previous emit calls from session creation/start
+        mockEventEmitter.emit.mockClear()
+
+        await service.sendQuery(mockSessionUuid, {
+          prompt: 'Test prompt',
+        })
+
+        // Should not emit CLAUDE_MESSAGE event for user prompt
+        // Only Claude's messages should be broadcast via WebSocket
+        const claudeMessageEmits = mockEventEmitter.emit.mock.calls.filter(
+          (call: unknown[]) => call[0] === INTERNAL_EVENTS.CLAUDE_MESSAGE,
+        )
+        expect(claudeMessageEmits).toHaveLength(0)
+      })
+
+      it('should update session timestamp when storing user prompt', async () => {
+        const mockSessionUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockSessionUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+        await service.startSession(mockSessionUuid)
+
+        const session = service.getSession(mockSessionUuid)
+        const originalUpdatedAt = session?.updatedAt
+
+        await sleep(10)
+
+        await service.sendQuery(mockSessionUuid, {
+          prompt: 'Test prompt',
+        })
+
+        const updatedSession = service.getSession(mockSessionUuid)
+        expect(updatedSession?.updatedAt.getTime()).toBeGreaterThan(
+          originalUpdatedAt?.getTime() ?? 0,
+        )
+      })
+
+      it('should persist user prompts alongside Claude messages', async () => {
+        const mockSessionUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockSessionUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+        await service.startSession(mockSessionUuid)
+
+        // User sends query (user prompt stored)
+        await service.sendQuery(mockSessionUuid, {
+          prompt: 'User query 1',
+        })
+
+        // Claude responds (assistant message)
+        service.handleClaudeMessage({
+          sessionId: mockSessionUuid,
+          queryId: 'query-1',
+          message: { type: 'assistant', content: 'Assistant response 1' },
+        })
+
+        // User sends another query
+        await service.sendQuery(mockSessionUuid, {
+          prompt: 'User query 2',
+        })
+
+        // Claude responds again
+        service.handleClaudeMessage({
+          sessionId: mockSessionUuid,
+          queryId: 'query-2',
+          message: { type: 'assistant', content: 'Assistant response 2' },
+        })
+
+        const session = service.getSession(mockSessionUuid)
+        expect(session?.messages).toHaveLength(4)
+        expect(session?.messages?.[0].type).toBe('user_prompt')
+        expect(session?.messages?.[1].type).toBe('assistant')
+        expect(session?.messages?.[2].type).toBe('user_prompt')
+        expect(session?.messages?.[3].type).toBe('assistant')
       })
     })
   })

@@ -119,6 +119,17 @@ const claudeUserMessageSchema = z.object({
   uuid: z.string().optional(),
 })
 
+const claudeUserPromptMessageSchema = z.object({
+  type: z.literal('user_prompt'),
+  message: z.object({
+    role: z.literal('user'),
+    content: z.string(),
+  }),
+  timestamp: z.string(),
+  session_id: z.string().optional(),
+  uuid: z.string().optional(),
+})
+
 const claudeResultMessageSchema = z.object({
   type: z.literal('result'),
   subtype: z.enum(['success', 'error']),
@@ -139,6 +150,7 @@ const claudeMessageSchema = z.discriminatedUnion('type', [
   claudeSystemMessageSchema,
   claudeAssistantMessageSchema,
   claudeUserMessageSchema,
+  claudeUserPromptMessageSchema,
   claudeResultMessageSchema,
 ])
 

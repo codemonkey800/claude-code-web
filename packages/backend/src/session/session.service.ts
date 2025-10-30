@@ -476,9 +476,42 @@ export class SessionService {
     // Record activity
     this.recordActivity(sessionId)
 
+    // Create and store user prompt message in session history
+    // This ensures user prompts are persisted in the backend for complete message history
+    // Note: We store silently without emitting events (no WebSocket broadcast)
+    // The frontend already adds user messages locally for instant feedback
+    const userPromptMessage: ClaudeMessage = {
+      type: 'user_prompt',
+      message: {
+        role: 'user',
+        content: payload.prompt,
+      },
+      timestamp: new Date().toISOString(),
+      session_id: sessionId,
+      uuid: randomUUID(),
+    }
+
+    // Add user prompt to session messages
+    if (!session.messages) {
+      session.messages = []
+    }
+    session.messages.push(userPromptMessage)
+
+    // Apply message pruning (same logic as handleClaudeMessage)
+    const maxMessages =
+      session.metadata?.configuration?.maxMessageHistory ?? 1000
+    if (session.messages.length > maxMessages) {
+      session.messages = session.messages.slice(-maxMessages)
+    }
+
+    // Update session timestamp
+    session.updatedAt = new Date()
+    this.sessions.set(sessionId, session)
+
     this.logger.log(
       `Sending query to session ${sessionId} with model ${payload.model || 'default'}`,
     )
+    this.logger.debug(`Stored user prompt for session ${sessionId}`)
 
     // Execute query asynchronously (don't await - it's fire-and-forget)
     // The executeQuery method emits events via EventEmitter2 which are broadcast via WebSocket
