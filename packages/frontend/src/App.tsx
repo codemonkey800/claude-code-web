@@ -5,10 +5,11 @@ import { useEffect, useState } from 'react'
 
 import { queryClient } from 'src/api/queryClient'
 import { ChatLayout } from 'src/components/ChatLayout/ChatLayout'
-import { ConnectionStatusToast } from 'src/components/ConnectionStatusToast'
 import { LandingPage } from 'src/components/LandingPage'
+import { ToastContainer } from 'src/components/Toast'
 import { ApiProvider } from 'src/context/ApiContext'
 import { SocketProvider } from 'src/context/SocketContext'
+import { useConnectionStatusToast } from 'src/hooks/useConnectionStatusToast'
 import { useRecents } from 'src/hooks/useRecents'
 import { useSocket } from 'src/hooks/useSocket'
 import { ConnectionStatus } from 'src/types/socket'
@@ -17,6 +18,8 @@ function AppContent() {
   const { connectionStatus, serverUrl } = useSocket()
   const { recents, addRecent, removeRecent } = useRecents()
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+
+  useConnectionStatusToast()
 
   const isConnected = connectionStatus === ConnectionStatus.CONNECTED
 
@@ -43,18 +46,18 @@ function AppContent() {
 
 function App() {
   return (
-    <Toast.Provider swipeDirection="right">
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <ReactQueryDevtools initialIsOpen={false} />
+      <Toast.Provider swipeDirection="right">
         <SocketProvider>
           <ApiProvider>
             <AppContent />
-            <ConnectionStatusToast />
+            <ToastContainer />
             <Toast.Viewport className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-96 max-w-full p-4" />
           </ApiProvider>
         </SocketProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
-    </Toast.Provider>
+      </Toast.Provider>
+    </QueryClientProvider>
   )
 }
 

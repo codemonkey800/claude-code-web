@@ -108,6 +108,15 @@ code {
   }
 }
 
+@keyframes shrink-width {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
 /* Animation utilities */
 .animate-gradient {
   background-size: 200% 200%;
@@ -134,6 +143,10 @@ code {
   animation: slide-out-to-right 0.2s ease-in forwards;
 }
 
+.toast-progress-bar {
+  animation: shrink-width linear forwards;
+}
+
 /* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .animate-gradient {
@@ -158,6 +171,9 @@ code {
     transform: translateX(0);
   }
   .animate-slide-out-right {
+    animation: none;
+  }
+  .toast-progress-bar {
     animation: none;
   }
 }
