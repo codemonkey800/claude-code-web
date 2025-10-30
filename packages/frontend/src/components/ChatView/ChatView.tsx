@@ -1,5 +1,6 @@
 import {
   type ClaudeMessage,
+  type ClaudeUserPromptMessage,
   type Session,
   SessionStatus,
   WS_EVENTS,
@@ -132,6 +133,19 @@ export function ChatView({
 
   const handleSubmit = async (prompt: string): Promise<void> => {
     if (!prompt.trim()) return
+
+    // Add user message immediately to UI
+    const userMessage: ClaudeUserPromptMessage = {
+      type: 'user_prompt',
+      message: {
+        role: 'user',
+        content: prompt,
+      },
+      timestamp: new Date().toISOString(),
+      session_id: currentSessionId ?? undefined,
+      uuid: crypto.randomUUID(),
+    }
+    setMessages(prev => [...prev, userMessage])
 
     try {
       if (isNewChat) {

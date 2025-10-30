@@ -6,6 +6,7 @@ import {
   type ClaudeToolResult,
   type ClaudeToolUse,
   type ClaudeUserMessage,
+  type ClaudeUserPromptMessage,
 } from '@claude-code-web/shared'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import React, { useState } from 'react'
@@ -27,6 +28,10 @@ export function Message({ message }: MessageProps): React.JSX.Element {
 
   if (message.type === 'user') {
     return <UserMessageView message={message} />
+  }
+
+  if (message.type === 'user_prompt') {
+    return <UserPromptMessageView message={message} />
   }
 
   if (message.type === 'system') {
@@ -165,6 +170,25 @@ function UserMessageView({
   )
 }
 
+function UserPromptMessageView({
+  message,
+}: {
+  message: ClaudeUserPromptMessage
+}): React.JSX.Element {
+  return (
+    <div className="p-4 rounded-lg border bg-emerald-950 border-emerald-800 max-w-[80%]">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xs font-semibold px-2 py-1 rounded bg-emerald-500 text-emerald-100">
+          You
+        </span>
+      </div>
+      <div className="text-gray-200 whitespace-pre-wrap break-words">
+        {message.message.content}
+      </div>
+    </div>
+  )
+}
+
 function ToolResultView({
   toolResult,
 }: {
@@ -176,7 +200,7 @@ function ToolResultView({
   const displayContent = isExpanded ? contentStr : contentStr.slice(0, 500)
 
   // Try to detect if content is JSON
-  const isJSON = (() => {
+  const isJSON = ((): boolean => {
     try {
       JSON.parse(contentStr)
       return true

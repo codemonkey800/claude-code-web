@@ -27,9 +27,17 @@ export function MessageList({ messages }: MessageListProps): React.JSX.Element {
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {messages.map((message, index) => (
-        <Message key={index} message={message} />
-      ))}
+      {messages.map((message, index) => {
+        const isUserPrompt = message.type === 'user_prompt'
+        return (
+          <div
+            key={index}
+            className={isUserPrompt ? 'flex justify-end' : 'flex justify-start'}
+          >
+            <Message message={message} />
+          </div>
+        )
+      })}
       <div ref={bottomRef} />
     </div>
   )

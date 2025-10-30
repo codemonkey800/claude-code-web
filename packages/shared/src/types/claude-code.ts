@@ -200,6 +200,22 @@ export interface ClaudeUserMessage {
 }
 
 /**
+ * User prompt message
+ * Represents the user's original text prompt (not tool results)
+ * Used for displaying user messages in the chat UI
+ */
+export interface ClaudeUserPromptMessage {
+  type: 'user_prompt'
+  message: {
+    role: 'user'
+    content: string
+  }
+  timestamp: string
+  session_id?: string
+  uuid?: string
+}
+
+/**
  * Query result message
  * Sent at the end of query execution with summary statistics
  */
@@ -231,4 +247,5 @@ export type ClaudeMessage =
   | ClaudeSystemMessage
   | ClaudeAssistantMessage
   | ClaudeUserMessage
+  | ClaudeUserPromptMessage
   | ClaudeResultMessage
