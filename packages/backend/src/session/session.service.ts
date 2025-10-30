@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 
 import {
   type ClaudeCodeQueryRequest,
+  type ClaudeMessage,
   type CreateSessionPayload,
   getErrorMessage,
   INTERNAL_EVENTS,
@@ -12,7 +13,7 @@ import {
   SessionStatus,
 } from '@claude-code-web/shared'
 import { Injectable, Logger } from '@nestjs/common'
-import { EventEmitter2 } from '@nestjs/event-emitter'
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter'
 
 import { FileSystemService } from 'src/filesystem/filesystem.service'
 import { ClaudeCodeSubprocessService } from 'src/modules/claude-code/claude-code-subprocess.service'
@@ -83,6 +84,7 @@ export class SessionService {
         errorCount: 0,
         lastActivityAt: now,
       },
+      messages: [],
     }
 
     this.sessions.set(sessionId, session)
@@ -530,5 +532,49 @@ export class SessionService {
       default:
         return false
     }
+  }
+
+  /**
+   * Handle Claude messages and store them in session history
+   * Listens to CLAUDE_MESSAGE events emitted by ClaudeCodeService
+   * Implements message pruning to prevent unbounded growth
+   */
+  @OnEvent(INTERNAL_EVENTS.CLAUDE_MESSAGE)
+  handleClaudeMessage(payload: {
+    sessionId: string
+    queryId: string
+    message: ClaudeMessage
+  }): void {
+    const { sessionId, message } = payload
+
+    const session = this.sessions.get(sessionId)
+    if (!session) {
+      this.logger.warn(`Cannot store message - session not found: ${sessionId}`)
+      return
+    }
+
+    // Initialize messages array if not present
+    if (!session.messages) {
+      session.messages = []
+    }
+
+    // Add message to history
+    session.messages.push(message)
+
+    // Prune old messages if exceeding limit
+    const maxMessages =
+      session.metadata?.configuration?.maxMessageHistory ?? 1000
+    if (session.messages.length > maxMessages) {
+      // Remove oldest messages (FIFO)
+      session.messages = session.messages.slice(-maxMessages)
+    }
+
+    // Update session timestamp
+    session.updatedAt = new Date()
+    this.sessions.set(sessionId, session)
+
+    this.logger.debug(
+      `Stored message for session ${sessionId} (total: ${session.messages.length})`,
+    )
   }
 }

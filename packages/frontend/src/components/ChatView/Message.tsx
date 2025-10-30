@@ -1,12 +1,7 @@
+import { type ClaudeMessage } from '@claude-code-web/shared'
 import React from 'react'
 
 import { cns } from 'src/utils/cns'
-
-export interface ClaudeMessage {
-  type: string
-  timestamp?: string
-  [key: string]: unknown
-}
 
 interface MessageProps {
   message: ClaudeMessage
@@ -54,9 +49,6 @@ export function Message({ message }: MessageProps): React.JSX.Element {
         >
           {message.type}
         </span>
-        {message.timestamp && (
-          <span className="text-xs text-gray-500">{message.timestamp}</span>
-        )}
       </div>
 
       {/* Message content */}

@@ -39,6 +39,8 @@ export interface SessionConfiguration {
   maxErrorLogSize?: number
   /** Session considered idle after this many minutes of inactivity */
   idleTimeoutMinutes?: number
+  /** Maximum number of messages to keep in message history (default: 1000) */
+  maxMessageHistory?: number
 }
 
 /**
@@ -81,6 +83,8 @@ export interface Session {
   updatedAt: Date
   /** Optional metadata for additional session information */
   metadata?: SessionMetadata
+  /** Chat message history for this session */
+  messages?: import('./claude-code').ClaudeMessage[]
 }
 
 /**

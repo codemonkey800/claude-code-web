@@ -1,6 +1,7 @@
+import { type ClaudeMessage } from '@claude-code-web/shared'
 import React, { useEffect, useRef } from 'react'
 
-import { type ClaudeMessage, Message } from './Message'
+import { Message } from './Message'
 
 interface MessageListProps {
   messages: ClaudeMessage[]

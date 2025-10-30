@@ -1,4 +1,9 @@
-import { type Session, SessionStatus, WS_EVENTS } from '@claude-code-web/shared'
+import {
+  type ClaudeMessage,
+  type Session,
+  SessionStatus,
+  WS_EVENTS,
+} from '@claude-code-web/shared'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
@@ -15,7 +20,6 @@ import {
 } from 'src/hooks/useSessions'
 import { useSocket } from 'src/hooks/useSocket'
 
-import { type ClaudeMessage } from './Message'
 import { MessageList } from './MessageList'
 
 interface ChatViewProps {
@@ -70,7 +74,14 @@ export function ChatView({
     ? selectedDirectory
     : session?.workingDirectory
 
-  // Join session room and listen for messages and status updates
+  // Load message history from REST API when session data is fetched
+  useEffect(() => {
+    if (session?.messages) {
+      setMessages(session.messages)
+    }
+  }, [session?.messages])
+
+  // Join session room and listen for real-time messages and status updates
   useEffect(() => {
     if (!socket || !isConnected || !currentSessionId) return
 
@@ -83,7 +94,7 @@ export function ChatView({
       },
     })
 
-    // Listen for Claude messages
+    // Listen for Claude messages (real-time updates only)
     const handleClaudeMessage = (data: {
       payload: { message: ClaudeMessage }
     }): void => {

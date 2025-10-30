@@ -93,3 +93,142 @@ export interface StartSessionPayload {
   /** Optional Claude model to use (defaults to claude-sonnet-4-5) */
   model?: string
 }
+
+/**
+ * Claude CLI Message Types
+ * These types match the actual message structure from the Claude CLI subprocess output
+ */
+
+/** Text content in assistant messages */
+export interface ClaudeTextContent {
+  type: 'text'
+  text: string
+}
+
+/** Tool use content in assistant messages */
+export interface ClaudeToolUse {
+  type: 'tool_use'
+  id: string
+  name: string
+  input: Record<string, unknown>
+}
+
+/** Tool result content in user messages */
+export interface ClaudeToolResult {
+  type: 'tool_result'
+  tool_use_id: string
+  content: string
+  is_error?: boolean
+}
+
+/** Token usage metrics */
+export interface ClaudeUsageMetrics {
+  input_tokens: number
+  output_tokens: number
+  cache_creation_input_tokens?: number
+  cache_read_input_tokens?: number
+  cache_creation?: {
+    ephemeral_5m_input_tokens?: number
+    ephemeral_1h_input_tokens?: number
+  }
+  service_tier?: string
+}
+
+/** MCP server status */
+export interface ClaudeMCPServer {
+  name: string
+  status: 'connected' | 'failed' | 'disconnected'
+}
+
+/**
+ * System initialization message from Claude CLI
+ * Sent at the start of each query with session configuration
+ */
+export interface ClaudeSystemMessage {
+  type: 'system'
+  subtype: 'init' | 'completion'
+  cwd?: string
+  session_id?: string
+  tools?: string[]
+  mcp_servers?: ClaudeMCPServer[]
+  model?: string
+  permissionMode?: string
+  slash_commands?: string[]
+  apiKeySource?: string
+  claude_code_version?: string
+  output_style?: string
+  agents?: string[]
+  skills?: string[]
+  plugins?: string[]
+  uuid?: string
+}
+
+/**
+ * Assistant message from Claude
+ * Contains Claude's responses (text or tool calls)
+ */
+export interface ClaudeAssistantMessage {
+  type: 'assistant'
+  message: {
+    model: string
+    id: string
+    type: 'message'
+    role: 'assistant'
+    content: Array<ClaudeTextContent | ClaudeToolUse>
+    stop_reason: string | null
+    stop_sequence: string | null
+    usage: ClaudeUsageMetrics
+  }
+  parent_tool_use_id?: string | null
+  session_id?: string
+  uuid?: string
+}
+
+/**
+ * User message containing tool results
+ * Sent back to Claude after tool execution
+ */
+export interface ClaudeUserMessage {
+  type: 'user'
+  message: {
+    role: 'user'
+    content: Array<ClaudeToolResult>
+  }
+  parent_tool_use_id?: string
+  session_id?: string
+  uuid?: string
+}
+
+/**
+ * Query result message
+ * Sent at the end of query execution with summary statistics
+ */
+export interface ClaudeResultMessage {
+  type: 'result'
+  subtype: 'success' | 'error'
+  is_error: boolean
+  duration_ms: number
+  duration_api_ms: number
+  num_turns: number
+  result: unknown
+  session_id?: string
+  total_cost_usd?: number
+  usage?: ClaudeUsageMetrics & {
+    server_tool_use?: {
+      web_search_requests: number
+    }
+  }
+  modelUsage?: Record<string, unknown>
+  permission_denials?: unknown[]
+  uuid?: string
+}
+
+/**
+ * Discriminated union of all Claude CLI message types
+ * Use the `type` field to narrow to specific message type
+ */
+export type ClaudeMessage =
+  | ClaudeSystemMessage
+  | ClaudeAssistantMessage
+  | ClaudeUserMessage
+  | ClaudeResultMessage

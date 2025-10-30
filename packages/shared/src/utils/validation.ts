@@ -30,6 +30,119 @@ export const sessionMetadataSchema = z
   .strict()
 
 /**
+ * Claude message schemas for validation
+ */
+const claudeTextContentSchema = z.object({
+  type: z.literal('text'),
+  text: z.string(),
+})
+
+const claudeToolUseSchema = z.object({
+  type: z.literal('tool_use'),
+  id: z.string(),
+  name: z.string(),
+  input: z.record(z.unknown()),
+})
+
+const claudeToolResultSchema = z.object({
+  type: z.literal('tool_result'),
+  tool_use_id: z.string(),
+  content: z.string(),
+  is_error: z.boolean().optional(),
+})
+
+const claudeUsageMetricsSchema = z.object({
+  input_tokens: z.number(),
+  output_tokens: z.number(),
+  cache_creation_input_tokens: z.number().optional(),
+  cache_read_input_tokens: z.number().optional(),
+  cache_creation: z
+    .object({
+      ephemeral_5m_input_tokens: z.number().optional(),
+      ephemeral_1h_input_tokens: z.number().optional(),
+    })
+    .optional(),
+  service_tier: z.string().optional(),
+})
+
+const claudeSystemMessageSchema = z.object({
+  type: z.literal('system'),
+  subtype: z.enum(['init', 'completion']),
+  cwd: z.string().optional(),
+  session_id: z.string().optional(),
+  tools: z.array(z.string()).optional(),
+  mcp_servers: z
+    .array(
+      z.object({
+        name: z.string(),
+        status: z.enum(['connected', 'failed', 'disconnected']),
+      }),
+    )
+    .optional(),
+  model: z.string().optional(),
+  permissionMode: z.string().optional(),
+  slash_commands: z.array(z.string()).optional(),
+  apiKeySource: z.string().optional(),
+  claude_code_version: z.string().optional(),
+  output_style: z.string().optional(),
+  agents: z.array(z.string()).optional(),
+  skills: z.array(z.string()).optional(),
+  plugins: z.array(z.string()).optional(),
+  uuid: z.string().optional(),
+})
+
+const claudeAssistantMessageSchema = z.object({
+  type: z.literal('assistant'),
+  message: z.object({
+    model: z.string(),
+    id: z.string(),
+    type: z.literal('message'),
+    role: z.literal('assistant'),
+    content: z.array(z.union([claudeTextContentSchema, claudeToolUseSchema])),
+    stop_reason: z.string().nullable(),
+    stop_sequence: z.string().nullable(),
+    usage: claudeUsageMetricsSchema,
+  }),
+  parent_tool_use_id: z.string().nullable().optional(),
+  session_id: z.string().optional(),
+  uuid: z.string().optional(),
+})
+
+const claudeUserMessageSchema = z.object({
+  type: z.literal('user'),
+  message: z.object({
+    role: z.literal('user'),
+    content: z.array(claudeToolResultSchema),
+  }),
+  parent_tool_use_id: z.string().optional(),
+  session_id: z.string().optional(),
+  uuid: z.string().optional(),
+})
+
+const claudeResultMessageSchema = z.object({
+  type: z.literal('result'),
+  subtype: z.enum(['success', 'error']),
+  is_error: z.boolean(),
+  duration_ms: z.number(),
+  duration_api_ms: z.number(),
+  num_turns: z.number(),
+  result: z.unknown(),
+  session_id: z.string().optional(),
+  total_cost_usd: z.number().optional(),
+  usage: z.unknown().optional(),
+  modelUsage: z.record(z.unknown()).optional(),
+  permission_denials: z.array(z.unknown()).optional(),
+  uuid: z.string().optional(),
+})
+
+const claudeMessageSchema = z.discriminatedUnion('type', [
+  claudeSystemMessageSchema,
+  claudeAssistantMessageSchema,
+  claudeUserMessageSchema,
+  claudeResultMessageSchema,
+])
+
+/**
  * Validates complete Session objects
  * Accepts both Date objects and ISO strings for timestamps
  */
@@ -41,6 +154,7 @@ export const sessionSchema = z
     createdAt: z.union([z.date(), z.string().datetime()]),
     updatedAt: z.union([z.date(), z.string().datetime()]),
     metadata: sessionMetadataSchema.optional(),
+    messages: z.array(claudeMessageSchema).optional(),
   })
   .strict()
 

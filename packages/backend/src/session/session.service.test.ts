@@ -1222,4 +1222,252 @@ describe('SessionService', () => {
       })
     })
   })
+
+  describe('message storage', () => {
+    describe('handleClaudeMessage', () => {
+      it('should store messages in session history', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        const testMessage = {
+          type: 'assistant',
+          content: 'Hello, world!',
+        }
+
+        service.handleClaudeMessage({
+          sessionId: mockUuid,
+          queryId: 'query-1',
+          message: testMessage,
+        })
+
+        const session = service.getSession(mockUuid)
+        expect(session?.messages).toHaveLength(1)
+        expect(session?.messages?.[0]).toEqual(testMessage)
+      })
+
+      it('should store multiple messages in order', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        const message1 = { type: 'user', content: 'First message' }
+        const message2 = { type: 'assistant', content: 'Second message' }
+        const message3 = { type: 'system', content: 'Third message' }
+
+        service.handleClaudeMessage({
+          sessionId: mockUuid,
+          queryId: 'query-1',
+          message: message1,
+        })
+        service.handleClaudeMessage({
+          sessionId: mockUuid,
+          queryId: 'query-1',
+          message: message2,
+        })
+        service.handleClaudeMessage({
+          sessionId: mockUuid,
+          queryId: 'query-1',
+          message: message3,
+        })
+
+        const session = service.getSession(mockUuid)
+        expect(session?.messages).toHaveLength(3)
+        expect(session?.messages?.[0]).toEqual(message1)
+        expect(session?.messages?.[1]).toEqual(message2)
+        expect(session?.messages?.[2]).toEqual(message3)
+      })
+
+      it('should prune old messages when exceeding maxMessageHistory', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({
+          workingDirectory: '/test/dir',
+          metadata: {
+            configuration: {
+              maxMessageHistory: 3,
+            },
+          },
+        })
+
+        // Add 5 messages (should keep only last 3)
+        for (let i = 1; i <= 5; i++) {
+          service.handleClaudeMessage({
+            sessionId: mockUuid,
+            queryId: 'query-1',
+            message: { type: 'assistant', content: `Message ${i}` },
+          })
+        }
+
+        const session = service.getSession(mockUuid)
+        expect(session?.messages).toHaveLength(3)
+        // Should have kept the last 3 messages
+        expect(session?.messages?.[0]).toEqual({
+          type: 'assistant',
+          content: 'Message 3',
+        })
+        expect(session?.messages?.[1]).toEqual({
+          type: 'assistant',
+          content: 'Message 4',
+        })
+        expect(session?.messages?.[2]).toEqual({
+          type: 'assistant',
+          content: 'Message 5',
+        })
+      })
+
+      it('should use default maxMessageHistory of 1000 when not configured', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        // Add 1002 messages
+        for (let i = 1; i <= 1002; i++) {
+          service.handleClaudeMessage({
+            sessionId: mockUuid,
+            queryId: 'query-1',
+            message: { type: 'assistant', content: `Message ${i}` },
+          })
+        }
+
+        const session = service.getSession(mockUuid)
+        expect(session?.messages).toHaveLength(1000)
+        // Should have kept messages 3-1002
+        expect(session?.messages?.[0]).toEqual({
+          type: 'assistant',
+          content: 'Message 3',
+        })
+        expect(session?.messages?.[999]).toEqual({
+          type: 'assistant',
+          content: 'Message 1002',
+        })
+      })
+
+      it('should not store messages for non-existent session', () => {
+        const nonExistentId = '550e8400-e29b-41d4-a716-446655440099'
+
+        service.handleClaudeMessage({
+          sessionId: nonExistentId,
+          queryId: 'query-1',
+          message: { type: 'assistant', content: 'Test' },
+        })
+
+        const session = service.getSession(nonExistentId)
+        expect(session).toBeNull()
+      })
+
+      it('should update session updatedAt timestamp', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        const session = await service.createSession({
+          workingDirectory: '/test/dir',
+        })
+        const originalUpdatedAt = session.updatedAt
+
+        await sleep(10)
+
+        service.handleClaudeMessage({
+          sessionId: mockUuid,
+          queryId: 'query-1',
+          message: { type: 'assistant', content: 'Test' },
+        })
+
+        const updatedSession = service.getSession(mockUuid)
+        expect(updatedSession?.updatedAt.getTime()).toBeGreaterThan(
+          originalUpdatedAt.getTime(),
+        )
+      })
+
+      it('should initialize messages array if not present', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        // Create session and manually remove messages array
+        await service.createSession({ workingDirectory: '/test/dir' })
+        const session = service.getSession(mockUuid)
+        if (session) {
+          delete session.messages
+        }
+
+        service.handleClaudeMessage({
+          sessionId: mockUuid,
+          queryId: 'query-1',
+          message: { type: 'assistant', content: 'Test' },
+        })
+
+        const updatedSession = service.getSession(mockUuid)
+        expect(updatedSession?.messages).toHaveLength(1)
+      })
+
+      it('should persist messages across multiple queries', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        // First query messages
+        service.handleClaudeMessage({
+          sessionId: mockUuid,
+          queryId: 'query-1',
+          message: { type: 'user', content: 'Query 1' },
+        })
+        service.handleClaudeMessage({
+          sessionId: mockUuid,
+          queryId: 'query-1',
+          message: { type: 'assistant', content: 'Response 1' },
+        })
+
+        // Second query messages
+        service.handleClaudeMessage({
+          sessionId: mockUuid,
+          queryId: 'query-2',
+          message: { type: 'user', content: 'Query 2' },
+        })
+        service.handleClaudeMessage({
+          sessionId: mockUuid,
+          queryId: 'query-2',
+          message: { type: 'assistant', content: 'Response 2' },
+        })
+
+        const session = service.getSession(mockUuid)
+        expect(session?.messages).toHaveLength(4)
+      })
+    })
+
+    describe('message initialization', () => {
+      it('should initialize messages as empty array on creation', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        const session = await service.createSession({
+          workingDirectory: '/test/dir',
+        })
+
+        expect(session.messages).toEqual([])
+        expect(Array.isArray(session.messages)).toBe(true)
+      })
+
+      it('should include messages array in getSession response', async () => {
+        const mockUuid = '550e8400-e29b-41d4-a716-446655440000'
+        ;(randomUUID as jest.Mock).mockReturnValue(mockUuid)
+
+        await service.createSession({ workingDirectory: '/test/dir' })
+
+        service.handleClaudeMessage({
+          sessionId: mockUuid,
+          queryId: 'query-1',
+          message: { type: 'assistant', content: 'Test' },
+        })
+
+        const session = service.getSession(mockUuid)
+        expect(session?.messages).toBeDefined()
+        expect(Array.isArray(session?.messages)).toBe(true)
+      })
+    })
+  })
 })

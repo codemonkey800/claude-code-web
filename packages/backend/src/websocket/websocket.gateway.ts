@@ -207,7 +207,7 @@ export class AppWebSocketGateway
       `Client ${client.id} joined session ${sessionId} (${sessionSockets.size} clients in room)`,
     )
 
-    // Send confirmation to client
+    // Send confirmation to client with session data
     const joinedEvent: SessionJoinedEvent = {
       type: WS_EVENTS.SESSION_JOINED,
       timestamp: new Date().toISOString(),
