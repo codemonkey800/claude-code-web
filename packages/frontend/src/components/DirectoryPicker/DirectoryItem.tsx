@@ -1,6 +1,7 @@
 import type { DirectoryEntry } from '@claude-code-web/shared'
 import { ChevronRight, Folder, Lock } from 'lucide-react'
 import type { KeyboardEvent } from 'react'
+import React from 'react'
 
 import { usePrefetchDirectory } from 'src/hooks/useFilesystem'
 import { cns } from 'src/utils/cns'
@@ -33,14 +34,17 @@ export function DirectoryItem({
   onToggleExpandPath,
   onSelectPath,
   onConfirmPath,
-}: DirectoryItemProps) {
+}: DirectoryItemProps): React.JSX.Element {
   const prefetch = usePrefetchDirectory()
 
-  // Determine if directory is expandable (has content)
-  // itemCount === 0 means definitely empty, undefined/> 0 means potentially has subdirectories
-  const isExpandable = directory.itemCount !== 0
+  // Determine if directory is expandable (has subdirectories)
+  // subdirectoryCount === 0 means no subdirectories, hide chevron
+  // subdirectoryCount > 0 means has subdirectories, show chevron
+  // subdirectoryCount === undefined means unknown (loading/error), show chevron for backward compatibility
+  const isExpandable =
+    directory.subdirectoryCount === undefined || directory.subdirectoryCount > 0
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
     // Enter or Space: Select directory
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
@@ -60,15 +64,18 @@ export function DirectoryItem({
     }
   }
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = (): void => {
     // Prefetch directory contents on hover for better UX
     if (isExpandable) {
       prefetch(directory.path, { showHidden })
     }
   }
 
-  const handleClick = () => {
-    // Only toggle expansion for expandable directories
+  const handleClick = (): void => {
+    // Select this directory (updates selectedPath state)
+    onSelect()
+
+    // Toggle expansion for expandable directories
     if (isExpandable) {
       onToggleExpand()
     }

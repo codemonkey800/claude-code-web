@@ -139,6 +139,12 @@ export class FileSystemService {
         const metadata = await this.getFileMetadata(fullPath, entryStats)
 
         if (isDirectory) {
+          // Count subdirectories to help UI determine if chevron should be shown
+          const subdirectoryCount = await this.getSubdirectoryCount(
+            fullPath,
+            showHidden,
+          )
+
           const dirEntry: DirectoryEntry = {
             name: dirent.name,
             path: fullPath,
@@ -146,6 +152,7 @@ export class FileSystemService {
             size: 0,
             modifiedAt: entryStats.mtime,
             metadata,
+            subdirectoryCount,
           }
           return dirEntry
         } else if (dirent.isFile()) {
@@ -372,6 +379,50 @@ export class FileSystemService {
       isReadable,
       isWritable,
       isExecutable,
+    }
+  }
+
+  /**
+   * Count the number of subdirectories in a directory
+   * This is used to determine if a directory should show an expand chevron in the UI
+   * @param path - Directory path to count subdirectories in
+   * @param showHidden - Whether to include hidden directories
+   * @returns Number of subdirectories, or undefined if directory cannot be read
+   * @private
+   */
+  private async getSubdirectoryCount(
+    path: string,
+    showHidden: boolean,
+  ): Promise<number | undefined> {
+    try {
+      // Read directory contents
+      const dirents = await readdir(path, { withFileTypes: true })
+
+      // Count subdirectories that pass filters
+      let count = 0
+      for (const dirent of dirents) {
+        if (!dirent.isDirectory()) {
+          continue
+        }
+
+        const fullPath = join(path, dirent.name)
+
+        // Apply same filtering logic as browseDirectory
+        if (
+          this.shouldIncludeFile(dirent.name, fullPath, path, showHidden, true)
+        ) {
+          count++
+        }
+      }
+
+      return count
+    } catch (error) {
+      // If we can't read the directory, return undefined
+      // This maintains backward compatibility and handles permission errors gracefully
+      this.logger.debug(
+        `Cannot count subdirectories in ${path}: ${getErrorMessage(error)}`,
+      )
+      return undefined
     }
   }
 

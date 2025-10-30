@@ -70,6 +70,8 @@ export interface DirectoryEntry extends FileSystemEntry {
   type: FileSystemNodeType.DIRECTORY
   /** Number of items in the directory (optional, for performance) */
   itemCount?: number
+  /** Number of subdirectories (not including files) */
+  subdirectoryCount?: number
 }
 
 /**
