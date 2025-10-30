@@ -18,6 +18,7 @@ interface DirectoryTreeProps {
   selectedPath: string | null
   onToggleExpand: (path: string) => void
   onSelectPath: (path: string) => void
+  onConfirmPath: (path: string) => void
 }
 
 export function DirectoryTree({
@@ -28,6 +29,7 @@ export function DirectoryTree({
   selectedPath,
   onToggleExpand,
   onSelectPath,
+  onConfirmPath,
 }: DirectoryTreeProps) {
   const { data, isLoading, error, refetch } = useDirectoryBrowse(path, {
     showHidden,
@@ -101,6 +103,7 @@ export function DirectoryTree({
           onSelect={() => onSelectPath(directory.path)}
           onToggleExpandPath={onToggleExpand}
           onSelectPath={onSelectPath}
+          onConfirmPath={onConfirmPath}
         />
       ))}
     </div>

@@ -1,13 +1,13 @@
 import * as Popover from '@radix-ui/react-popover'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import type React from 'react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
+import { useFilesystemConfig } from 'src/hooks/useFilesystem'
 import { cns } from 'src/utils/cns'
 
 import { DirectoryTree } from './DirectoryTree'
 import { PathBreadcrumb } from './PathBreadcrumb'
-import { PathInput } from './PathInput'
 
 interface DirectoryPickerProps {
   open: boolean
@@ -21,26 +21,30 @@ export function DirectoryPicker({
   open,
   onOpenChange,
   onSelect,
-  initialPath = '/',
+  initialPath,
   children,
 }: DirectoryPickerProps) {
-  const [currentPath, setCurrentPath] = useState(initialPath)
-  const [selectedPath, setSelectedPath] = useState<string | null>(initialPath)
+  const { data: config } = useFilesystemConfig()
+  const baseDir = config?.allowedBaseDir ?? '/'
+  const effectiveInitialPath = initialPath ?? baseDir
+
+  const [currentPath, setCurrentPath] = useState(effectiveInitialPath)
+  const [selectedPath, setSelectedPath] = useState<string | null>(
+    effectiveInitialPath,
+  )
   const [showHidden, setShowHidden] = useState(false)
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(
-    new Set([initialPath]),
+    new Set([effectiveInitialPath]),
   )
-
-  const pathInputRef = useRef<HTMLDivElement>(null)
 
   // Reset state when popover opens
   useEffect(() => {
     if (open) {
-      setCurrentPath(initialPath)
-      setSelectedPath(initialPath)
-      setExpandedDirs(new Set([initialPath]))
+      setCurrentPath(effectiveInitialPath)
+      setSelectedPath(effectiveInitialPath)
+      setExpandedDirs(new Set([effectiveInitialPath]))
     }
-  }, [open, initialPath])
+  }, [open, effectiveInitialPath])
 
   const handleToggleExpand = (path: string) => {
     setExpandedDirs(prev => {
@@ -71,6 +75,10 @@ export function DirectoryPicker({
     }
   }
 
+  const handleConfirmPath = (path: string) => {
+    onSelect(path)
+  }
+
   return (
     <Popover.Root open={open} onOpenChange={onOpenChange}>
       <Popover.Trigger asChild>{children}</Popover.Trigger>
@@ -89,19 +97,15 @@ export function DirectoryPicker({
         >
           {/* Breadcrumb navigation */}
           <div className="px-4 py-3 bg-gray-800 border-b border-gray-700 rounded-t-lg">
-            <PathBreadcrumb path={currentPath} onNavigate={handleNavigate} />
-          </div>
-
-          {/* Path input */}
-          <div
-            className="px-4 py-3 border-b border-gray-700"
-            ref={pathInputRef}
-          >
-            <PathInput value={currentPath} onChange={handleNavigate} />
+            <PathBreadcrumb
+              path={currentPath}
+              baseDir={baseDir}
+              onNavigate={handleNavigate}
+            />
           </div>
 
           {/* Directory tree (scrollable) */}
-          <ScrollArea.Root className="flex-1 overflow-hidden">
+          <ScrollArea.Root className="flex-1 min-h-0 overflow-y-auto">
             <ScrollArea.Viewport className="h-full w-full">
               <div className="p-4 min-h-[200px]">
                 <DirectoryTree
@@ -111,6 +115,7 @@ export function DirectoryPicker({
                   selectedPath={selectedPath}
                   onToggleExpand={handleToggleExpand}
                   onSelectPath={handleSelectPath}
+                  onConfirmPath={handleConfirmPath}
                 />
               </div>
             </ScrollArea.Viewport>

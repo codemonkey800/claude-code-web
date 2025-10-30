@@ -1,34 +1,46 @@
 import { ChevronRight, Home } from 'lucide-react'
 import { Fragment } from 'react'
 
+import { getRelativePath } from 'src/utils/path'
+
 interface PathBreadcrumbProps {
   path: string
+  baseDir: string
   onNavigate: (path: string) => void
 }
 
-export function PathBreadcrumb({ path, onNavigate }: PathBreadcrumbProps) {
-  // Split path into segments, filtering out empty strings
-  const segments = path.split('/').filter(Boolean)
+export function PathBreadcrumb({
+  path,
+  baseDir,
+  onNavigate,
+}: PathBreadcrumbProps) {
+  // Get path relative to base directory
+  const relativePath = getRelativePath(path, baseDir)
+
+  // Split relative path into segments, filtering out empty strings
+  // If relativePath is empty (at base directory), segments will be empty array
+  const segments = relativePath ? relativePath.split('/').filter(Boolean) : []
 
   return (
     <nav
       aria-label="Directory breadcrumb"
       className="flex items-center gap-1 text-sm overflow-x-auto"
     >
-      {/* Root/Home button */}
+      {/* Home button (navigates to base directory) */}
       <button
-        onClick={() => onNavigate('/')}
+        onClick={() => onNavigate(baseDir)}
         className="p-1 hover:bg-gray-700 rounded transition-colors flex-shrink-0 text-gray-300"
-        aria-label="Navigate to root directory"
-        title="Root directory"
+        aria-label="Navigate to base directory"
+        title="Base directory"
       >
         <Home className="w-4 h-4" />
       </button>
 
       {/* Path segments */}
       {segments.map((segment, index) => {
-        // Build the full path up to this segment
-        const segmentPath = '/' + segments.slice(0, index + 1).join('/')
+        // Build the full path up to this segment relative to baseDir
+        const segmentPath =
+          baseDir + '/' + segments.slice(0, index + 1).join('/')
         const isLast = index === segments.length - 1
 
         return (

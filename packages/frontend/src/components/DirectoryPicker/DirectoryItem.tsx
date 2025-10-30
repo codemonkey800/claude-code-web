@@ -17,6 +17,7 @@ interface DirectoryItemProps {
   onSelect: () => void
   onToggleExpandPath: (path: string) => void
   onSelectPath: (path: string) => void
+  onConfirmPath: (path: string) => void
 }
 
 export function DirectoryItem({
@@ -31,8 +32,13 @@ export function DirectoryItem({
   onSelect,
   onToggleExpandPath,
   onSelectPath,
+  onConfirmPath,
 }: DirectoryItemProps) {
   const prefetch = usePrefetchDirectory()
+
+  // Determine if directory is expandable (has content)
+  // itemCount === 0 means definitely empty, undefined/> 0 means potentially has subdirectories
+  const isExpandable = directory.itemCount !== 0
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     // Enter or Space: Select directory
@@ -41,8 +47,8 @@ export function DirectoryItem({
       onSelect()
     }
 
-    // Right Arrow: Expand if not expanded
-    if (e.key === 'ArrowRight' && !isExpanded) {
+    // Right Arrow: Expand if not expanded and expandable
+    if (e.key === 'ArrowRight' && !isExpanded && isExpandable) {
       e.preventDefault()
       onToggleExpand()
     }
@@ -56,7 +62,16 @@ export function DirectoryItem({
 
   const handleMouseEnter = () => {
     // Prefetch directory contents on hover for better UX
-    prefetch(directory.path, { showHidden })
+    if (isExpandable) {
+      prefetch(directory.path, { showHidden })
+    }
+  }
+
+  const handleClick = () => {
+    // Only toggle expansion for expandable directories
+    if (isExpandable) {
+      onToggleExpand()
+    }
   }
 
   return (
@@ -64,38 +79,35 @@ export function DirectoryItem({
       {/* Directory row */}
       <div
         role="treeitem"
-        aria-expanded={isExpanded}
+        aria-expanded={isExpandable ? isExpanded : undefined}
         aria-selected={isSelected}
         aria-label={`${directory.name} directory`}
         tabIndex={0}
         onMouseEnter={handleMouseEnter}
-        onClick={onSelect}
+        onClick={handleClick}
         onKeyDown={handleKeyDown}
         style={{ paddingLeft: `${level * 16}px` }}
         className={cns(
-          'flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer',
+          'flex items-center gap-2 px-2 py-1.5 rounded',
           'transition-colors hover:bg-gray-800',
           'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset',
+          'select-none',
+          isExpandable && 'cursor-pointer',
           isSelected && 'bg-blue-950 hover:bg-blue-900',
         )}
       >
-        {/* Expand/collapse chevron */}
-        <button
-          onClick={e => {
-            e.stopPropagation()
-            onToggleExpand()
-          }}
-          className="p-0.5 hover:bg-gray-700 rounded transition-colors flex-shrink-0 text-gray-400"
-          aria-label={isExpanded ? 'Collapse directory' : 'Expand directory'}
-          tabIndex={-1}
-        >
+        {/* Expand/collapse chevron (only show if directory is expandable) */}
+        {isExpandable ? (
           <ChevronRight
             className={cns(
-              'w-4 h-4 transition-transform',
+              'w-4 h-4 transition-transform flex-shrink-0 text-gray-400',
               isExpanded && 'rotate-90',
             )}
+            aria-hidden="true"
           />
-        </button>
+        ) : (
+          <div className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+        )}
 
         {/* Folder icon */}
         <Folder className="w-4 h-4 text-blue-400 flex-shrink-0" />
@@ -131,6 +143,7 @@ export function DirectoryItem({
           selectedPath={selectedPath}
           onToggleExpand={onToggleExpandPath}
           onSelectPath={onSelectPath}
+          onConfirmPath={onConfirmPath}
         />
       )}
     </div>

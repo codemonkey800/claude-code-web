@@ -1,7 +1,7 @@
-import { ChevronDown, Folder } from 'lucide-react'
-import { useState } from 'react'
+import React, { useState } from 'react'
 
 import { DirectoryPicker } from 'src/components/DirectoryPicker/DirectoryPicker'
+import { cns } from 'src/utils/cns'
 
 interface DirectoryPathHeaderProps {
   /** Directory path to display */
@@ -16,50 +16,37 @@ export function DirectoryPathHeader({
   path,
   editable,
   onPathChange,
-}: DirectoryPathHeaderProps) {
+}: DirectoryPathHeaderProps): React.JSX.Element {
   const [popoverOpen, setPopoverOpen] = useState(false)
 
-  // Extract directory name from path
-  const directoryName = path.split('/').filter(Boolean).pop() || path
-
-  const handleDirectorySelect = (newPath: string) => {
+  const handleDirectorySelect = (newPath: string): void => {
     onPathChange?.(newPath)
     setPopoverOpen(false)
   }
 
-  const content = (
-    <div
-      className={`flex items-center gap-2 px-4 py-3 ${
-        editable
-          ? 'cursor-pointer hover:bg-gray-800 transition-colors'
-          : 'cursor-default'
-      }`}
-    >
-      <Folder className="w-5 h-5 text-gray-400 flex-shrink-0" />
-      <div className="flex-1 min-w-0">
-        <h2 className="text-lg font-semibold text-gray-100 truncate">
-          {directoryName}
-        </h2>
-        <p className="text-sm text-gray-400 truncate">{path}</p>
-      </div>
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-lg text-gray-300 font-mono">{path}</span>
+
       {editable && (
-        <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <DirectoryPicker
+          open={popoverOpen}
+          onOpenChange={setPopoverOpen}
+          onSelect={handleDirectorySelect}
+          initialPath={path}
+        >
+          <button
+            type="button"
+            className={cns(
+              'px-3 py-1.5 text-sm font-medium text-gray-200',
+              'bg-gray-700 hover:bg-gray-600 border border-gray-600',
+              'rounded-md transition-colors',
+            )}
+          >
+            Select Directory
+          </button>
+        </DirectoryPicker>
       )}
     </div>
-  )
-
-  if (!editable) {
-    return <div className="flex-1 border-b border-gray-700">{content}</div>
-  }
-
-  return (
-    <DirectoryPicker
-      open={popoverOpen}
-      onOpenChange={setPopoverOpen}
-      onSelect={handleDirectorySelect}
-      initialPath={path}
-    >
-      <div className="flex-1 border-b border-gray-700">{content}</div>
-    </DirectoryPicker>
   )
 }

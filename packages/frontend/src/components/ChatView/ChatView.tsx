@@ -1,17 +1,27 @@
 import { Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { ChatInput } from 'src/components/shared/ChatInput'
 import { DirectoryPathHeader } from 'src/components/shared/DirectoryPathHeader'
 import { StatusBadge } from 'src/components/shared/StatusBadge'
+import { useFilesystemConfig } from 'src/hooks/useFilesystem'
 import { useSession } from 'src/hooks/useSession'
 
 interface ChatViewProps {
   sessionId: string | null
 }
 
-export function ChatView({ sessionId }: ChatViewProps) {
-  const [selectedDirectory, setSelectedDirectory] = useState('~')
+export function ChatView({ sessionId }: ChatViewProps): React.JSX.Element {
+  const { data: config } = useFilesystemConfig()
+  const baseDir = config?.allowedBaseDir ?? '~'
+  const [selectedDirectory, setSelectedDirectory] = useState(baseDir)
+
+  // Sync selectedDirectory with baseDir when config loads
+  useEffect(() => {
+    if (config?.allowedBaseDir) {
+      setSelectedDirectory(config.allowedBaseDir)
+    }
+  }, [config?.allowedBaseDir])
 
   // Only fetch session if sessionId exists
   const {
@@ -27,12 +37,12 @@ export function ChatView({ sessionId }: ChatViewProps) {
     ? selectedDirectory
     : session?.workingDirectory
 
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     // TODO: Send query to session
     // Intentionally empty for now
   }
 
-  const handleDirectoryChange = (newPath: string) => {
+  const handleDirectoryChange = (newPath: string): void => {
     setSelectedDirectory(newPath)
   }
 
@@ -62,12 +72,13 @@ export function ChatView({ sessionId }: ChatViewProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header with directory path */}
-      <div className="flex items-center justify-between pr-6">
+      <div className="flex items-center justify-between px-3 border-b border-gray-700 h-16">
         <DirectoryPathHeader
-          path={directoryPath || '~'}
+          path={directoryPath || baseDir}
           editable={isNewChat}
           onPathChange={handleDirectoryChange}
         />
+
         {!isNewChat && session && <StatusBadge status={session.status} />}
       </div>
 

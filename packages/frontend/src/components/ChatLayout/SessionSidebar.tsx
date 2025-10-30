@@ -103,7 +103,7 @@ export function SessionSidebar({
   return (
     <aside className="w-80 h-full border-r border-gray-700 flex flex-col bg-gray-900">
       {/* Header with New Chat button */}
-      <div className="p-4 border-b border-gray-700">
+      <div className="px-3 border-b border-gray-700 h-16 flex items-center justify-center">
         <button
           type="button"
           onClick={handleNewChatClick}
