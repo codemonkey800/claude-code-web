@@ -228,7 +228,7 @@ Enhance the existing session management system with:
 ### 3.1 Claude Code Service Setup
 
 - [ ] **Create ClaudeCodeModule structure**
-  - Create `packages/backend/src/modules/claude-code/`
+  - Create `packages/backend/src/claude-code/`
   - Create `claude-code.module.ts`
   - Create `claude-code.service.ts`
   - Create `claude-code-mock.service.ts` for development

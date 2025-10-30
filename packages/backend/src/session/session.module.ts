@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
 
+import { ClaudeCodeModule } from 'src/claude-code/claude-code.module'
 import { FileSystemModule } from 'src/filesystem/filesystem.module'
-import { ClaudeCodeModule } from 'src/modules/claude-code/claude-code.module'
 
 import { SessionController } from './session.controller'
 import { SessionService } from './session.service'

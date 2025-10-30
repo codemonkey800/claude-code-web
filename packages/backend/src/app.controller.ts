@@ -11,7 +11,12 @@ export class AppController {
    * GET /health
    */
   @Get('health')
-  getHealth() {
+  getHealth(): {
+    status: string
+    timestamp: string
+    uptime: number
+    service: string
+  } {
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -25,7 +30,17 @@ export class AppController {
    * GET /
    */
   @Get()
-  getRoot() {
+  getRoot(): {
+    name: string
+    version: string
+    status: string
+    endpoints: {
+      health: string
+      sessions: string
+      filesystem: string
+      websocket: string
+    }
+  } {
     return {
       name: 'Claude Code Web API',
       version: '1.0.0',

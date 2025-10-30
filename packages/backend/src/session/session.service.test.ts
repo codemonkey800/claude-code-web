@@ -4,8 +4,8 @@ import { INTERNAL_EVENTS, SessionStatus, sleep } from '@claude-code-web/shared'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Test, TestingModule } from '@nestjs/testing'
 
+import { ClaudeCodeSubprocessService } from 'src/claude-code/claude-code-subprocess.service'
 import { FileSystemService } from 'src/filesystem/filesystem.service'
-import { ClaudeCodeSubprocessService } from 'src/modules/claude-code/claude-code-subprocess.service'
 
 import { SessionService } from './session.service'
 

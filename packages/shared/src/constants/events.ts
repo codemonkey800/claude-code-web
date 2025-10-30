@@ -39,6 +39,8 @@ export const WS_EVENTS = {
   CLAUDE_MESSAGE: 'claude:message',
   /** Claude Code query result (completion summary) */
   CLAUDE_QUERY_RESULT: 'claude:query-result',
+  /** Claude Code ready for next prompt */
+  CLAUDE_READY: 'claude:ready',
 } as const
 
 /**
@@ -90,6 +92,10 @@ export const INTERNAL_EVENTS = {
   // Claude Code streaming events
   /** Emitted for every message from the Claude Agent SDK (generic event) */
   CLAUDE_MESSAGE: 'claude.message',
+  /** Emitted when Claude subprocess receives 'result' message and is ready for next prompt */
+  CLAUDE_READY: 'claude.ready',
+  /** Emitted when Claude subprocess crashes unexpectedly */
+  CLAUDE_SUBPROCESS_CRASHED: 'claude.subprocess.crashed',
 } as const
 
 /**

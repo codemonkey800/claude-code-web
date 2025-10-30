@@ -480,6 +480,12 @@ export class AppWebSocketGateway
   }): void {
     const { sessionId, queryId, message } = payload
 
+    // Validate sessionId
+    if (!sessionId) {
+      this.logger.warn('Received CLAUDE_MESSAGE with invalid sessionId')
+      return
+    }
+
     const sockets = this.sessionRooms.get(sessionId)
     if (!sockets || sockets.size === 0) {
       this.logger.debug(`No clients in session ${sessionId} for Claude message`)
@@ -512,6 +518,12 @@ export class AppWebSocketGateway
   }): void {
     const { result } = payload
 
+    // Validate result and sessionId
+    if (!result || !result.sessionId) {
+      this.logger.warn('Received CLAUDE_QUERY_COMPLETED with invalid result')
+      return
+    }
+
     const sockets = this.sessionRooms.get(result.sessionId)
     if (!sockets || sockets.size === 0) {
       this.logger.debug(
@@ -529,5 +541,34 @@ export class AppWebSocketGateway
     this.logger.log(
       `Query ${result.queryId} completed for session ${result.sessionId} (${result.duration}ms)`,
     )
+  }
+
+  /**
+   * Handle Claude ready events
+   * Emitted when Claude subprocess is ready for the next prompt
+   */
+  @OnEvent(INTERNAL_EVENTS.CLAUDE_READY)
+  handleClaudeReady(payload: { sessionId: string }): void {
+    const { sessionId } = payload
+
+    // Validate sessionId
+    if (!sessionId) {
+      this.logger.warn('Received CLAUDE_READY with invalid sessionId')
+      return
+    }
+
+    const sockets = this.sessionRooms.get(sessionId)
+    if (!sockets || sockets.size === 0) {
+      this.logger.debug(`No clients in session ${sessionId} for ready event`)
+      return
+    }
+
+    this.server.to(sessionId).emit(WS_EVENTS.CLAUDE_READY, {
+      type: WS_EVENTS.CLAUDE_READY,
+      timestamp: new Date().toISOString(),
+      payload: { sessionId },
+    })
+
+    this.logger.debug(`Claude ready event broadcast to session ${sessionId}`)
   }
 }

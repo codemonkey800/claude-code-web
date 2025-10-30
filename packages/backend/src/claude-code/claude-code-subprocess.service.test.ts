@@ -46,6 +46,9 @@ describe('ClaudeCodeSubprocessService', () => {
         if (key === 'CLAUDE_SUBPROCESS_KILL_TIMEOUT') {
           return 5000
         }
+        if (key === 'CLAUDE_QUERY_TIMEOUT') {
+          return 300000
+        }
         return undefined
       }),
     }
@@ -153,23 +156,17 @@ describe('ClaudeCodeSubprocessService', () => {
   })
 
   describe('executeQuery - basic functionality', () => {
-    it('should throw error if spawn throws', async () => {
-      const childProcess =
-        jest.requireMock<typeof import('node:child_process')>(
-          'node:child_process',
-        )
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      childProcess.spawn.mockImplementation(() => {
-        throw new Error('spawn error')
-      })
-
+    it('should throw error if session not found', async () => {
+      // Test what happens when trying to execute a query without initializing the session first
       await expect(
         service.executeQuery({
-          sessionId: 'session-123',
+          sessionId: 'non-existent-session',
           prompt: 'test',
           workingDirectory: '/test',
         }),
-      ).rejects.toThrow('spawn error')
+      ).rejects.toThrow(
+        'Cannot send message: session non-existent-session not found',
+      )
     })
   })
 
@@ -179,6 +176,12 @@ describe('ClaudeCodeSubprocessService', () => {
       // This is checked during service instantiation
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(configService.get).toHaveBeenCalled()
+    })
+
+    it('should read query timeout from config service', () => {
+      // The service constructor calls configService.get for CLAUDE_QUERY_TIMEOUT
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(configService.get).toHaveBeenCalledWith('CLAUDE_QUERY_TIMEOUT')
     })
   })
 })

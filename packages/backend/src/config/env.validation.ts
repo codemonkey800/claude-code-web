@@ -17,6 +17,7 @@ export const DEFAULT_FS_DEFAULT_PAGE_SIZE = 100
 export const DEFAULT_FS_MAX_PAGE_SIZE = 500
 export const DEFAULT_FS_SHOW_HIDDEN_FILES = false
 export const DEFAULT_CLAUDE_SUBPROCESS_KILL_TIMEOUT = 5000
+export const DEFAULT_CLAUDE_QUERY_TIMEOUT = 300000 // 5 minutes
 
 enum Environment {
   Development = 'development',
@@ -69,6 +70,13 @@ export class EnvironmentVariables {
   @Max(30000)
   CLAUDE_SUBPROCESS_KILL_TIMEOUT?: number =
     DEFAULT_CLAUDE_SUBPROCESS_KILL_TIMEOUT
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(30000)
+  @Max(600000)
+  CLAUDE_QUERY_TIMEOUT?: number = DEFAULT_CLAUDE_QUERY_TIMEOUT
 }
 
 export function validate(

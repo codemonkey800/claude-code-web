@@ -117,33 +117,54 @@ shared/src/
 
 ### Claude Code Module
 
-Located in `packages/backend/src/modules/claude-code/`, this module integrates with the Claude Code CLI as a subprocess (matching happy-cli architecture).
+Located in `packages/backend/src/claude-code/`, this module integrates with the Claude Code CLI as a long-running subprocess per session (inspired by happy-cli architecture).
 
 **Architecture:**
 
 - **IClaudeCodeService**: Abstract interface for Claude Code operations
-- **ClaudeCodeSubprocessService**: Spawns global `claude` CLI as child process (injected directly via standard NestJS dependency injection)
+- **ClaudeCodeSubprocessService**: Main service implementing the interface
+- **ClaudeSessionManager**: Manages all active session subprocesses
+- **ClaudeSessionSubprocess**: Manages a single long-running subprocess per session
 
-**Subprocess Integration:**
+**Key Design Pattern: Long-Running Subprocess**
 
-The service spawns the global `claude` CLI command with these arguments:
+Each session has ONE subprocess that stays alive until the session is terminated:
 
+```
+Session created → Subprocess spawned → Query 1 → Query 2 → ... → Session terminated → Subprocess killed
+```
+
+This is more efficient than spawning a new process for each query:
+
+- ~200ms saved per query (no spawn/kill overhead)
+- True session continuity
+- Better resource utilization
+
+**Subprocess Configuration:**
+
+The subprocess is spawned with these critical arguments:
+
+- `--input-format stream-json` - **CRITICAL**: Keeps stdin open for multiple messages
 - `--output-format stream-json` - JSON streaming output
 - `--verbose` - Detailed logging
-- `--input-format stream-json` - Accept JSON input via stdin
 - `--permission-mode bypassPermissions` - Auto-approve all tools
-- `--model <model>` - Optional model selection
-- `--resume <sessionId>` - Resume existing sessions
 
 **Message Flow:**
 
-1. User sends prompt via WebSocket
-2. Backend spawns `claude` subprocess with arguments
-3. Backend writes JSON message to subprocess stdin
-4. CLI executes query and streams JSON messages via stdout
-5. Backend parses messages line-by-line and emits events via EventEmitter2
-6. WebSocket Gateway listens to events and broadcasts to session rooms
-7. Frontend receives real-time updates via Socket.io
+1. **Session Start**: `SessionService.startSession()` → `ClaudeCodeService.initialize()` → `ClaudeSessionManager.createSession()` → Subprocess spawned
+2. **User Query**: User sends prompt via WebSocket → `SessionService.sendQuery()` → `ClaudeCodeService.executeQuery()` → `ClaudeSessionManager.sendMessage()` → Message written to subprocess stdin
+3. **Response Streaming**: CLI processes query → Streams JSON messages via stdout → Backend parses line-by-line → Emits `CLAUDE_MESSAGE` events → WebSocket Gateway broadcasts to session room
+4. **Query Completion**: CLI sends `result` message → Backend emits `CLAUDE_READY` event → Frontend knows Claude is ready for next prompt
+5. **Session End**: `SessionService.stopSession()` → `ClaudeCodeService.shutdown()` → `ClaudeSessionManager.destroySession()` → Subprocess gracefully terminated
+
+**Message Queue Pattern:**
+
+When multiple queries arrive concurrently for the same session:
+
+1. Messages are queued in `ClaudeSessionSubprocess`
+2. Messages are processed one at a time (sequential)
+3. After receiving `result` message, next message is processed
+4. This ensures clean conversation flow
 
 **Message Types from CLI:**
 
@@ -158,7 +179,8 @@ Frontend can process messages based on `message.type` to build rich UI.
 
 **Integration with SessionService:**
 
-- `startSession()` calls `claudeCodeService.initialize()` to set up Claude Code
+- `startSession()` calls `claudeCodeService.initialize()` to spawn long-running subprocess
+- `sendQuery()` calls `claudeCodeService.executeQuery()` to send message to existing subprocess
 - `stopSession()` calls `claudeCodeService.shutdown()` for cleanup and process termination
 - Sessions automatically transition: `INITIALIZING` → `ACTIVE` → `TERMINATED`
 
