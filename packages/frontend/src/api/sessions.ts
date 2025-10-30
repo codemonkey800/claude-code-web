@@ -1,4 +1,10 @@
-import type { CreateSessionPayload, Session } from '@claude-code-web/shared'
+import type {
+  CreateSessionPayload,
+  SendQueryPayload,
+  SendQueryResponse,
+  Session,
+  StartSessionPayload,
+} from '@claude-code-web/shared'
 
 /**
  * Type for the configured fetch function from ApiContext
@@ -68,4 +74,61 @@ export async function createSession(
   }
 
   return response.json() as Promise<Session>
+}
+
+/**
+ * Start a session (transition from INITIALIZING to ACTIVE)
+ * Optionally sends an initial query after starting
+ * @param apiFetch - Configured fetch function from ApiContext
+ * @param sessionId - The session ID to start
+ * @param payload - Optional payload with initial prompt
+ * @returns Promise resolving to session or query response
+ * @throws Error if the request fails
+ */
+export async function startSession(
+  apiFetch: ApiFetch,
+  sessionId: string,
+  payload?: StartSessionPayload,
+): Promise<Session | SendQueryResponse> {
+  const response = await apiFetch(`/sessions/${sessionId}/start`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload || {}),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to start session: ${response.statusText}`)
+  }
+
+  return response.json() as Promise<Session | SendQueryResponse>
+}
+
+/**
+ * Send a query to an active session
+ * @param apiFetch - Configured fetch function from ApiContext
+ * @param sessionId - The session ID to send the query to
+ * @param payload - Query payload containing the prompt
+ * @returns Promise resolving to the query response
+ * @throws Error if the request fails
+ */
+export async function sendQuery(
+  apiFetch: ApiFetch,
+  sessionId: string,
+  payload: SendQueryPayload,
+): Promise<SendQueryResponse> {
+  const response = await apiFetch(`/sessions/${sessionId}/query`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to send query: ${response.statusText}`)
+  }
+
+  return response.json() as Promise<SendQueryResponse>
 }

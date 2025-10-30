@@ -1,9 +1,12 @@
 import { randomUUID } from 'node:crypto'
 
 import {
+  type ClaudeCodeQueryRequest,
   type CreateSessionPayload,
   getErrorMessage,
   INTERNAL_EVENTS,
+  type SendQueryPayload,
+  type SendQueryResponse,
   type Session,
   type SessionError,
   SessionStatus,
@@ -417,6 +420,91 @@ export class SessionService {
 
     const now = new Date()
     return now.getTime() - session.createdAt.getTime()
+  }
+
+  /**
+   * Sends a query to Claude Code for an active session
+   * Executes the query asynchronously with streaming results via WebSocket
+   * If session is INITIALIZING, automatically starts it first (fallback protection)
+   * @param sessionId - The session ID to send the query to
+   * @param payload - The query payload containing prompt and optional model
+   * @returns Query ID and session ID
+   * @throws {Error} if session not found or in invalid state
+   */
+  async sendQuery(
+    sessionId: string,
+    payload: SendQueryPayload,
+  ): Promise<SendQueryResponse> {
+    const session = this.getSession(sessionId)
+
+    if (!session) {
+      const error = `Cannot send query - session not found: ${sessionId}`
+      this.logger.error(error)
+      throw new Error(error)
+    }
+
+    // Auto-start INITIALIZING sessions (fallback protection against race conditions)
+    if (session.status === SessionStatus.INITIALIZING) {
+      this.logger.log(
+        `Session ${sessionId} is INITIALIZING, auto-starting before sending query`,
+      )
+      try {
+        await this.startSession(sessionId)
+      } catch (error) {
+        const errorMsg = `Failed to auto-start session ${sessionId}: ${getErrorMessage(error)}`
+        this.logger.error(errorMsg)
+        throw new Error(errorMsg)
+      }
+    } else if (session.status !== SessionStatus.ACTIVE) {
+      // Not INITIALIZING or ACTIVE - invalid state
+      const error = `Cannot send query to session ${sessionId} - must be in ACTIVE or INITIALIZING state, got: ${session.status}`
+      this.logger.error(error)
+      throw new Error(error)
+    }
+
+    // Build the query request
+    const request: ClaudeCodeQueryRequest = {
+      sessionId,
+      prompt: payload.prompt,
+      workingDirectory: session.workingDirectory,
+      model: payload.model,
+      permissionMode: 'bypassPermissions', // Auto-approve all tools
+    }
+
+    // Record activity
+    this.recordActivity(sessionId)
+
+    this.logger.log(
+      `Sending query to session ${sessionId} with model ${payload.model || 'default'}`,
+    )
+
+    // Execute query asynchronously (don't await - it's fire-and-forget)
+    // The executeQuery method emits events via EventEmitter2 which are broadcast via WebSocket
+    this.claudeCodeService
+      .executeQuery(request)
+      .then(result => {
+        this.logger.log(
+          `Query completed for session ${sessionId}: ${result.status} (${result.duration}ms)`,
+        )
+      })
+      .catch(error => {
+        this.logger.error(
+          `Query failed for session ${sessionId}: ${getErrorMessage(error)}`,
+        )
+        this.recordError(sessionId, {
+          message: `Query execution failed: ${getErrorMessage(error)}`,
+          code: 'QUERY_EXECUTION_ERROR',
+          context: 'session.sendQuery',
+        })
+      })
+
+    // Return immediately with a queryId placeholder
+    // The actual queryId is generated inside executeQuery, but we don't wait for it
+    // For now, return session info - client will receive messages via WebSocket
+    return {
+      queryId: randomUUID(), // Generate a correlation ID for the client
+      sessionId,
+    }
   }
 
   /**

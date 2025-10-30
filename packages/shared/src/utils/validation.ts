@@ -54,6 +54,36 @@ export const createSessionPayloadSchema = z
   })
   .strict()
 
+/**
+ * Validates SendQueryPayload for sending queries to sessions
+ */
+export const sendQueryPayloadSchema = z
+  .object({
+    prompt: z.string().min(1),
+    model: z.string().optional(),
+  })
+  .strict()
+
+/**
+ * Validates SendQueryResponse
+ */
+export const sendQueryResponseSchema = z
+  .object({
+    queryId: z.string().uuid(),
+    sessionId: z.string().uuid(),
+  })
+  .strict()
+
+/**
+ * Validates StartSessionPayload for starting a session with optional initial query
+ */
+export const startSessionPayloadSchema = z
+  .object({
+    prompt: z.string().min(1).optional(),
+    model: z.string().optional(),
+  })
+  .strict()
+
 // ============================================================================
 // File System Validation Schemas
 // ============================================================================

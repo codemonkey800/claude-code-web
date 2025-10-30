@@ -1,4 +1,10 @@
-import type { CreateSessionPayload, Session } from '@claude-code-web/shared'
+import type {
+  CreateSessionPayload,
+  SendQueryPayload,
+  SendQueryResponse,
+  Session,
+  StartSessionPayload,
+} from '@claude-code-web/shared'
 import {
   useMutation,
   type UseMutationResult,
@@ -8,7 +14,7 @@ import {
 } from '@tanstack/react-query'
 
 import { createQueries } from 'src/api/queryKeys'
-import { createSession } from 'src/api/sessions'
+import { createSession, sendQuery, startSession } from 'src/api/sessions'
 import { useApi } from 'src/context/ApiContext'
 
 /**
@@ -48,5 +54,56 @@ export function useCreateSession(): UseMutationResult<
         queryKey: ['sessions', 'list'],
       })
     },
+  })
+}
+
+/**
+ * Hook to start a session with an optional initial query
+ * Used to transition a session from INITIALIZING to ACTIVE
+ *
+ * @returns Mutation object with mutate function, loading state, and error
+ */
+export function useStartSession(): UseMutationResult<
+  Session | SendQueryResponse,
+  Error,
+  { sessionId: string; payload?: StartSessionPayload },
+  unknown
+> {
+  const { apiFetch } = useApi()
+
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      payload,
+    }: {
+      sessionId: string
+      payload?: StartSessionPayload
+    }): Promise<Session | SendQueryResponse> =>
+      startSession(apiFetch, sessionId, payload),
+  })
+}
+
+/**
+ * Hook to send a query to an active session
+ * Used for follow-up messages in an existing session
+ *
+ * @returns Mutation object with mutate function, loading state, and error
+ */
+export function useSendQuery(): UseMutationResult<
+  SendQueryResponse,
+  Error,
+  { sessionId: string; payload: SendQueryPayload },
+  unknown
+> {
+  const { apiFetch } = useApi()
+
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      payload,
+    }: {
+      sessionId: string
+      payload: SendQueryPayload
+    }): Promise<SendQueryResponse> => sendQuery(apiFetch, sessionId, payload),
   })
 }

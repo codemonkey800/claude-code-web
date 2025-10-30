@@ -221,6 +221,65 @@ export class SessionController {
           return this.handleError('Failed to delete session', error)
         }
       },
+
+      /**
+       * Start a session and optionally send initial query
+       * POST /sessions/:id/start
+       */
+      startSession: async ({ params, body }) => {
+        try {
+          this.logger.log(`Starting session ${params.id} via REST API`)
+
+          // Start the session (INITIALIZING -> ACTIVE)
+          const session = await this.sessionService.startSession(params.id)
+
+          // If an initial query was provided, send it
+          if (body.prompt) {
+            this.logger.log(
+              `Sending initial query to session ${params.id} after start`,
+            )
+            const queryResponse = await this.sessionService.sendQuery(
+              params.id,
+              {
+                prompt: body.prompt,
+                model: body.model,
+              },
+            )
+
+            return {
+              status: HttpStatus.OK,
+              body: queryResponse,
+            }
+          }
+
+          // No initial query, return the session
+          return {
+            status: HttpStatus.OK,
+            body: this.serializeSession(session),
+          }
+        } catch (error) {
+          return this.handleError('Failed to start session', error)
+        }
+      },
+
+      /**
+       * Send a query to an active session
+       * POST /sessions/:id/query
+       */
+      sendQuery: async ({ params, body }) => {
+        try {
+          this.logger.log(`Sending query to session ${params.id} via REST API`)
+
+          const response = await this.sessionService.sendQuery(params.id, body)
+
+          return {
+            status: HttpStatus.OK,
+            body: response,
+          }
+        } catch (error) {
+          return this.handleError('Failed to send query', error)
+        }
+      },
     })
   }
 }

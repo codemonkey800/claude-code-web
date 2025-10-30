@@ -4,6 +4,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter'
 
 import { DEFAULT_MAX_EVENT_LISTENERS, validate } from './config/env.validation'
 import { FileSystemModule } from './filesystem/filesystem.module'
+import { LoggingModule } from './logging/logging.module'
 import { ClaudeCodeModule } from './modules/claude-code/claude-code.module'
 import { SessionModule } from './session/session.module'
 import { WebSocketModule } from './websocket/websocket.module'
@@ -27,6 +28,7 @@ import { WebSocketModule } from './websocket/websocket.module'
         : DEFAULT_MAX_EVENT_LISTENERS,
     }),
     FileSystemModule,
+    LoggingModule,
     ClaudeCodeModule,
     SessionModule,
     WebSocketModule,

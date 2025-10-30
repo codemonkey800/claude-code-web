@@ -8,8 +8,11 @@ import { z } from 'zod'
 
 import {
   createSessionPayloadSchema,
+  sendQueryPayloadSchema,
+  sendQueryResponseSchema,
   sessionSchema,
   sessionStatusSchema,
+  startSessionPayloadSchema,
 } from 'src/utils/validation'
 
 const c = initContract()
@@ -144,5 +147,60 @@ export const sessionsContract = c.router({
     }),
     body: null,
     summary: 'Delete a session',
+  },
+
+  /**
+   * Start a session (transition from INITIALIZING to ACTIVE)
+   * Optionally accepts an initial query to send after starting
+   * POST /sessions/:id/start
+   */
+  startSession: {
+    method: 'POST',
+    path: '/sessions/:id/start',
+    responses: {
+      200: z.union([sessionResponseSchema, sendQueryResponseSchema]),
+      404: z.object({
+        message: z.string(),
+      }),
+      400: z.object({
+        message: z.string(),
+        errors: z.array(z.unknown()).optional(),
+      }),
+      500: z.object({
+        message: z.string(),
+      }),
+    },
+    body: startSessionPayloadSchema,
+    pathParams: z.object({
+      id: z.string().uuid(),
+    }),
+    summary: 'Start a session and optionally send initial query',
+  },
+
+  /**
+   * Send a query to an active session
+   * POST /sessions/:id/query
+   */
+  sendQuery: {
+    method: 'POST',
+    path: '/sessions/:id/query',
+    responses: {
+      200: sendQueryResponseSchema,
+      404: z.object({
+        message: z.string(),
+      }),
+      400: z.object({
+        message: z.string(),
+        errors: z.array(z.unknown()).optional(),
+      }),
+      500: z.object({
+        message: z.string(),
+      }),
+    },
+    body: sendQueryPayloadSchema,
+    pathParams: z.object({
+      id: z.string().uuid(),
+    }),
+    summary: 'Send a query to an active session',
   },
 })

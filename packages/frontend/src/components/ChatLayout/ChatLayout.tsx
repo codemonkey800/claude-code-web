@@ -1,5 +1,5 @@
 import { Menu, X } from 'lucide-react'
-import { useState } from 'react'
+import React, { useState } from 'react'
 
 import { Button } from 'src/components/Button'
 import { ChatView } from 'src/components/ChatView/ChatView'
@@ -15,7 +15,7 @@ interface ChatLayoutProps {
 export function ChatLayout({
   activeSessionId,
   onSessionChange,
-}: ChatLayoutProps) {
+}: ChatLayoutProps): React.JSX.Element {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
@@ -65,7 +65,10 @@ export function ChatLayout({
           </h1>
         </div>
 
-        <ChatView sessionId={activeSessionId} />
+        <ChatView
+          sessionId={activeSessionId}
+          onSessionChange={onSessionChange}
+        />
       </main>
     </div>
   )

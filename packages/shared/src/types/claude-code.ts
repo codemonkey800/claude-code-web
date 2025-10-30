@@ -62,3 +62,34 @@ export interface ClaudeCodeQueryResult {
   /** Error message if execution failed */
   error?: string
 }
+
+/**
+ * Payload for sending a query via REST API
+ */
+export interface SendQueryPayload {
+  /** User prompt to send to Claude */
+  prompt: string
+  /** Optional Claude model to use (defaults to claude-sonnet-4-5) */
+  model?: string
+}
+
+/**
+ * Response from sending a query via REST API
+ * The query executes asynchronously with streaming results via WebSocket
+ */
+export interface SendQueryResponse {
+  /** Query ID for tracking this execution */
+  queryId: string
+  /** Session ID this query belongs to */
+  sessionId: string
+}
+
+/**
+ * Payload for starting a session with optional initial query
+ */
+export interface StartSessionPayload {
+  /** Optional initial prompt to send after starting */
+  prompt?: string
+  /** Optional Claude model to use (defaults to claude-sonnet-4-5) */
+  model?: string
+}
