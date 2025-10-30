@@ -1,7 +1,6 @@
-import { INTERNAL_EVENTS } from '@claude-code-web/shared'
 import { ConfigService } from '@nestjs/config'
-import { Test, TestingModule } from '@nestjs/testing'
 import { EventEmitter2 } from '@nestjs/event-emitter'
+import { Test, TestingModule } from '@nestjs/testing'
 
 import { ClaudeCodeSubprocessService } from './claude-code-subprocess.service'
 
@@ -19,7 +18,7 @@ jest.mock('node:crypto', () => ({
 
 describe('ClaudeCodeSubprocessService', () => {
   let service: ClaudeCodeSubprocessService
-  let eventEmitter: jest.Mocked<EventEmitter2>
+  let _eventEmitter: jest.Mocked<EventEmitter2>
   let configService: jest.Mocked<ConfigService>
 
   beforeEach(async () => {
@@ -27,8 +26,12 @@ describe('ClaudeCodeSubprocessService', () => {
     jest.clearAllMocks()
 
     // Mock execSync to simulate Claude CLI being available
-    const { execSync } = jest.requireMock('node:child_process')
-    execSync.mockReturnValue(Buffer.from('claude version 1.0.0'))
+    const childProcess =
+      jest.requireMock<typeof import('node:child_process')>(
+        'node:child_process',
+      )
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    childProcess.execSync.mockReturnValue(Buffer.from('claude version 1.0.0'))
 
     const mockEventEmitter = {
       emit: jest.fn(),
@@ -64,24 +67,32 @@ describe('ClaudeCodeSubprocessService', () => {
     service = module.get<ClaudeCodeSubprocessService>(
       ClaudeCodeSubprocessService,
     )
-    eventEmitter = module.get(EventEmitter2)
-    configService = module.get(ConfigService)
+    _eventEmitter = module.get<jest.Mocked<EventEmitter2>>(EventEmitter2)
+    configService = module.get<jest.Mocked<ConfigService>>(ConfigService)
   })
 
   describe('onModuleInit', () => {
     it('should check for Claude CLI on module initialization', () => {
-      const { execSync } = jest.requireMock('node:child_process')
-      execSync.mockReturnValue(Buffer.from('claude version 1.0.0'))
+      const childProcess =
+        jest.requireMock<typeof import('node:child_process')>(
+          'node:child_process',
+        )
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      childProcess.execSync.mockReturnValue(Buffer.from('claude version 1.0.0'))
 
       expect(() => service.onModuleInit()).not.toThrow()
-      expect(execSync).toHaveBeenCalledWith('claude --version', {
+      expect(childProcess.execSync).toHaveBeenCalledWith('claude --version', {
         stdio: 'ignore',
       })
     })
 
     it('should throw error if Claude CLI not found', () => {
-      const { execSync } = jest.requireMock('node:child_process')
-      execSync.mockImplementation(() => {
+      const childProcess =
+        jest.requireMock<typeof import('node:child_process')>(
+          'node:child_process',
+        )
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      childProcess.execSync.mockImplementation(() => {
         throw new Error('Command not found')
       })
 
@@ -143,8 +154,12 @@ describe('ClaudeCodeSubprocessService', () => {
 
   describe('executeQuery - basic functionality', () => {
     it('should throw error if spawn throws', async () => {
-      const { spawn } = jest.requireMock('node:child_process')
-      spawn.mockImplementation(() => {
+      const childProcess =
+        jest.requireMock<typeof import('node:child_process')>(
+          'node:child_process',
+        )
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      childProcess.spawn.mockImplementation(() => {
         throw new Error('spawn error')
       })
 
@@ -162,6 +177,7 @@ describe('ClaudeCodeSubprocessService', () => {
     it('should read kill timeout from config service', () => {
       // The service constructor calls configService.get for CLAUDE_SUBPROCESS_KILL_TIMEOUT
       // This is checked during service instantiation
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(configService.get).toHaveBeenCalled()
     })
   })

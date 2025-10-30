@@ -120,14 +120,13 @@ export class FileSystemController {
 
           const config = this.fileSystemService.getConfig()
 
-          return {
+          return Promise.resolve({
             status: HttpStatus.OK,
             body: config,
-          }
+          })
         } catch (error) {
-          return this.handleError(
-            'Failed to get file system configuration',
-            error,
+          return Promise.resolve(
+            this.handleError('Failed to get file system configuration', error),
           )
         }
       },

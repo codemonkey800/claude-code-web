@@ -295,7 +295,7 @@ export class ClaudeCodeSubprocessService
     // Cleanup all queries for this session
     for (const [queryId, state] of this.queries.entries()) {
       if (state.sessionId === sessionId) {
-        this.cancelQuery(queryId)
+        await this.cancelQuery(queryId)
         await this.cleanup(queryId)
       }
     }
