@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 
+import { AppController } from './app.controller'
 import { DEFAULT_MAX_EVENT_LISTENERS, validate } from './config/env.validation'
 import { FileSystemModule } from './filesystem/filesystem.module'
 import { LoggingModule } from './logging/logging.module'
@@ -33,7 +34,7 @@ import { WebSocketModule } from './websocket/websocket.module'
     SessionModule,
     WebSocketModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {}
