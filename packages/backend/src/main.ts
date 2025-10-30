@@ -15,10 +15,14 @@ async function bootstrap(): Promise<void> {
   })
 
   const port = configService.get<number>('PORT', 8081)
-  await app.listen(port)
+  await app.listen(port, '0.0.0.0')
 
   // eslint-disable-next-line no-console
-  console.log(`🚀 Backend server is running on: http://localhost:${port}`)
+  console.log(`🚀 Backend server is running on:`)
+  // eslint-disable-next-line no-console
+  console.log(`   - Local:   http://localhost:${port}`)
+  // eslint-disable-next-line no-console
+  console.log(`   - Network: http://10.0.0.69:${port}`)
   // eslint-disable-next-line no-console
   console.log(`🔗 CORS enabled for all origins`)
 }
