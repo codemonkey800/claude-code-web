@@ -1,9 +1,9 @@
 import { Loader2 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 
-import { ChatInput } from 'src/components/shared/ChatInput'
-import { DirectoryPathHeader } from 'src/components/shared/DirectoryPathHeader'
-import { StatusBadge } from 'src/components/shared/StatusBadge'
+import { ChatInput } from 'src/components/ChatInput'
+import { DirectoryPathHeader } from 'src/components/DirectoryPathHeader'
+import { StatusBadge } from 'src/components/StatusBadge'
 import { useFilesystemConfig } from 'src/hooks/useFilesystem'
 import { useSession } from 'src/hooks/useSession'
 
