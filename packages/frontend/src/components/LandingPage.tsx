@@ -1,7 +1,8 @@
-import { Clock, Loader2, X } from 'lucide-react'
+import { Clock, X } from 'lucide-react'
 import type React from 'react'
 import { type FormEvent, useState } from 'react'
 
+import { Button } from 'src/components/Button'
 import { useSocket } from 'src/hooks/useSocket'
 import { ConnectionStatus } from 'src/types/socket'
 import { cns } from 'src/utils/cns'
@@ -120,20 +121,17 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
                       )}
                     </p>
                   </div>
-                  <button
+                  <Button
+                    variant="destructive"
                     onClick={e => handleDeleteRecent(e, recent.url)}
+                    icon={<X className="h-4 w-4" />}
                     className={cns(
-                      'flex-shrink-0 rounded p-1 text-gray-500',
+                      'p-1',
                       'opacity-0 transition-all duration-200',
-                      'hover:bg-red-900 hover:text-red-400',
                       'group-hover:opacity-100 focus:opacity-100',
-                      'focus:outline-none focus:ring-2 focus:ring-red-500',
                     )}
                     aria-label={`Delete ${recent.url}`}
-                    type="button"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+                  />
                 </div>
               ))}
             </div>
@@ -141,7 +139,7 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
         )}
 
         {/* Connection Form */}
-        <div className="animate-fade-in-up rounded-lg border border-gray-700 bg-gray-800/90 p-8 shadow-xl shadow-blue-500/10 backdrop-blur-xl">
+        <div className="animate-fade-in-up rounded-lg border border-gray-700 bg-gray-800/90 p-8 shadow-xl shadow-purple-500/10 backdrop-blur-xl">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Server URL Input */}
             <div>
@@ -162,8 +160,8 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
                   'w-full rounded-lg border border-gray-600',
                   'bg-gray-900 text-gray-100 px-4 py-2',
                   'placeholder:text-gray-500 transition-all duration-300',
-                  'focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500',
-                  'focus:shadow-lg focus:shadow-blue-500/20',
+                  'focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500',
+                  'focus:shadow-lg focus:shadow-purple-500/20',
                   'disabled:cursor-not-allowed disabled:bg-gray-800 disabled:opacity-50',
                 )}
                 aria-invalid={!!displayError}
@@ -183,29 +181,16 @@ export function LandingPage({ recents, onRemoveRecent }: LandingPageProps) {
             )}
 
             {/* Connect Button */}
-            <button
+            <Button
+              variant="primary"
               type="submit"
-              disabled={isConnecting || !serverUrl.trim()}
-              className={cns(
-                'flex w-full items-center justify-center gap-2',
-                'rounded-lg bg-blue-600 px-6 py-3 font-medium text-white',
-                'transition-all duration-300 hover:scale-105 hover:bg-blue-500',
-                'hover:shadow-lg hover:shadow-blue-500/50',
-                'focus:outline-none focus:ring-2 focus:ring-blue-500',
-                'focus:ring-offset-2 focus:ring-offset-gray-800',
-                'disabled:cursor-not-allowed disabled:opacity-50',
-                'disabled:hover:scale-100 disabled:hover:shadow-none',
-              )}
+              fullWidth
+              loading={isConnecting}
+              disabled={!serverUrl.trim()}
+              className="px-6 py-3 hover:scale-105"
             >
-              {isConnecting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Connecting...</span>
-                </>
-              ) : (
-                <span>Connect to Server</span>
-              )}
-            </button>
+              {isConnecting ? 'Connecting...' : 'Connect to Server'}
+            </Button>
           </form>
 
           {/* Connection Status Info */}

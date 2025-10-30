@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
+import { Button } from 'src/components/Button'
 import { DirectoryPicker } from 'src/components/DirectoryPicker/DirectoryPicker'
-import { cns } from 'src/utils/cns'
 
 interface DirectoryPathHeaderProps {
   /** Directory path to display */
@@ -35,16 +35,9 @@ export function DirectoryPathHeader({
           onSelect={handleDirectorySelect}
           initialPath={path}
         >
-          <button
-            type="button"
-            className={cns(
-              'px-3 py-1.5 text-sm font-medium text-gray-200',
-              'bg-gray-700 hover:bg-gray-600 border border-gray-600',
-              'rounded-md transition-colors',
-            )}
-          >
+          <Button variant="secondary" className="text-sm px-3 py-1.5">
             Select Directory
-          </button>
+          </Button>
         </DirectoryPicker>
       )}
     </div>

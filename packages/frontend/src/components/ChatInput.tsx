@@ -1,6 +1,7 @@
-import { Loader2, Send } from 'lucide-react'
+import { Send } from 'lucide-react'
 import { type KeyboardEvent, useState } from 'react'
 
+import { Button } from 'src/components/Button'
 import { cns } from 'src/utils/cns'
 
 interface ChatInputProps {
@@ -46,7 +47,7 @@ export function ChatInput({
         className={cns(
           'flex-1 resize-none rounded-lg border border-gray-600',
           'bg-gray-900 text-gray-100 placeholder:text-gray-500 px-4 py-3',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500',
+          'focus:outline-none focus:ring-2 focus:ring-purple-500',
           'disabled:bg-gray-800 disabled:cursor-not-allowed',
         )}
         style={{
@@ -54,26 +55,17 @@ export function ChatInput({
           maxHeight: '200px',
         }}
       />
-      <button
-        type="button"
+      <Button
+        variant="primary"
         onClick={handleSubmit}
         disabled={isSubmitDisabled}
-        className={cns(
-          'px-6 py-3 rounded-lg bg-blue-600 text-white',
-          'hover:bg-blue-500 transition-colors',
-          'disabled:bg-gray-700 disabled:cursor-not-allowed',
-          'flex items-center justify-center',
-        )}
+        loading={isLoading}
+        icon={<Send className="w-5 h-5" />}
+        className="px-6 py-3"
         style={{
           minHeight: '52px',
         }}
-      >
-        {isLoading ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
-        ) : (
-          <Send className="w-5 h-5" />
-        )}
-      </button>
+      />
     </div>
   )
 }

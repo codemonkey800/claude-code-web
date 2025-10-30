@@ -3,6 +3,7 @@ import * as ScrollArea from '@radix-ui/react-scroll-area'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 
+import { Button } from 'src/components/Button'
 import { useFilesystemConfig } from 'src/hooks/useFilesystem'
 import { cns } from 'src/utils/cns'
 
@@ -135,37 +136,28 @@ export function DirectoryPicker({
                 type="checkbox"
                 checked={showHidden}
                 onChange={e => setShowHidden(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                className="w-4 h-4 rounded border-gray-600 text-purple-600 focus:ring-2 focus:ring-purple-500"
               />
               <span>Show hidden files</span>
             </label>
 
             {/* Action buttons */}
             <div className="flex items-center gap-2">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={() => onOpenChange(false)}
-                className={cns(
-                  'px-4 py-2 text-sm font-medium text-gray-200',
-                  'bg-gray-700 hover:bg-gray-600 border border-gray-600',
-                  'rounded-md transition-colors',
-                )}
+                className="text-sm"
               >
                 Cancel
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="primary"
                 onClick={handleConfirmSelection}
                 disabled={!selectedPath}
-                className={cns(
-                  'px-4 py-2 text-sm font-medium text-white',
-                  'bg-blue-600 hover:bg-blue-500',
-                  'disabled:bg-gray-700 disabled:cursor-not-allowed',
-                  'rounded-md transition-colors',
-                )}
+                className="text-sm"
               >
                 Select
-              </button>
+              </Button>
             </div>
           </div>
         </Popover.Content>

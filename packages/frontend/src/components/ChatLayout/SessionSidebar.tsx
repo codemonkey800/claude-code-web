@@ -1,6 +1,7 @@
 import type { Session } from '@claude-code-web/shared'
 import { Folder, Loader2, Plus } from 'lucide-react'
 
+import { Button } from 'src/components/Button'
 import { useSessions } from 'src/hooks/useSessions'
 import { cns } from 'src/utils/cns'
 
@@ -35,21 +36,21 @@ function SessionItem({ session, isActive, onClick }: SessionItemProps) {
   }[session.status]
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       onClick={onClick}
       className={cns(
-        'w-full text-left p-3 rounded-lg transition-colors',
+        'w-full p-3',
         isActive
-          ? 'bg-blue-950 border border-blue-800'
-          : 'hover:bg-gray-800 border border-transparent',
+          ? 'bg-purple-950 border border-purple-800'
+          : 'border border-transparent',
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 w-full text-left">
         <Folder
           className={cns(
             'w-5 h-5 mt-0.5 flex-shrink-0',
-            isActive ? 'text-blue-400' : 'text-gray-500',
+            isActive ? 'text-purple-400' : 'text-gray-500',
           )}
         />
         <div className="flex-1 min-w-0">
@@ -57,7 +58,7 @@ function SessionItem({ session, isActive, onClick }: SessionItemProps) {
             <p
               className={cns(
                 'text-sm font-medium truncate',
-                isActive ? 'text-blue-300' : 'text-gray-200',
+                isActive ? 'text-purple-300' : 'text-gray-200',
               )}
             >
               {workingDirectoryName}
@@ -71,7 +72,7 @@ function SessionItem({ session, isActive, onClick }: SessionItemProps) {
           </p>
         </div>
       </div>
-    </button>
+    </Button>
   )
 }
 
@@ -104,14 +105,15 @@ export function SessionSidebar({
     <aside className="w-80 h-full border-r border-gray-700 flex flex-col bg-gray-900">
       {/* Header with New Chat button */}
       <div className="px-3 border-b border-gray-700 h-16 flex items-center justify-center">
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          fullWidth
           onClick={handleNewChatClick}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
+          icon={<Plus className="w-4 h-4" />}
+          className="text-sm"
         >
-          <Plus className="w-4 h-4" />
           New Chat
-        </button>
+        </Button>
       </div>
 
       {/* Scrollable session list */}

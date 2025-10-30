@@ -1,6 +1,7 @@
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
 
+import { Button } from 'src/components/Button'
 import { ChatView } from 'src/components/ChatView/ChatView'
 import { cns } from 'src/utils/cns'
 
@@ -47,17 +48,18 @@ export function ChatLayout({
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile: Hamburger button */}
         <div className="lg:hidden flex items-center p-4 border-b border-gray-700">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            {sidebarOpen ? (
-              <X className="w-6 h-6 text-gray-400" />
-            ) : (
-              <Menu className="w-6 h-6 text-gray-400" />
-            )}
-          </button>
+            icon={
+              sidebarOpen ? (
+                <X className="w-6 h-6 text-gray-400" />
+              ) : (
+                <Menu className="w-6 h-6 text-gray-400" />
+              )
+            }
+            className="p-2"
+          />
           <h1 className="ml-3 text-lg font-semibold text-gray-100">
             Claude Code Web
           </h1>

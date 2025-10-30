@@ -5,6 +5,7 @@ import {
 } from '@claude-code-web/shared'
 import { AlertCircle, Loader2 } from 'lucide-react'
 
+import { Button } from 'src/components/Button'
 import { useDirectoryBrowse } from 'src/hooks/useFilesystem'
 import { cns } from 'src/utils/cns'
 
@@ -46,12 +47,13 @@ export function DirectoryTree({
       >
         <AlertCircle className="w-4 h-4 flex-shrink-0" />
         <span className="text-sm flex-1">Failed to load directory</span>
-        <button
+        <Button
+          variant="link"
           onClick={() => void refetch()}
-          className="text-xs underline hover:no-underline"
+          className="text-xs"
         >
           Retry
-        </button>
+        </Button>
       </div>
     )
   }
