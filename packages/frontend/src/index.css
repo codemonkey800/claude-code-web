@@ -147,6 +147,34 @@ code {
   animation: shrink-width linear forwards;
 }
 
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+.animation-delay-0 {
+  animation-delay: 0ms;
+}
+
+.animation-delay-150 {
+  animation-delay: 150ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
 /* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .animate-gradient {
@@ -175,5 +203,9 @@ code {
   }
   .toast-progress-bar {
     animation: none;
+  }
+  .animate-pulse-dot {
+    animation: none;
+    opacity: 1;
   }
 }

@@ -39,6 +39,7 @@ export function ChatView({
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(
     sessionId,
   )
+  const [isClaudeResponding, setIsClaudeResponding] = useState(false)
 
   const { socket, isConnected } = useSocket()
   const queryClient = useQueryClient()
@@ -114,13 +115,20 @@ export function ChatView({
       }
     }
 
+    // Listen for Claude ready (query completed)
+    const handleClaudeReady = (): void => {
+      setIsClaudeResponding(false)
+    }
+
     socket.on(WS_EVENTS.CLAUDE_MESSAGE, handleClaudeMessage)
     socket.on(WS_EVENTS.SESSION_STATUS, handleSessionStatus)
+    socket.on(WS_EVENTS.CLAUDE_READY, handleClaudeReady)
 
     // Cleanup
     return (): void => {
       socket.off(WS_EVENTS.CLAUDE_MESSAGE, handleClaudeMessage)
       socket.off(WS_EVENTS.SESSION_STATUS, handleSessionStatus)
+      socket.off(WS_EVENTS.CLAUDE_READY, handleClaudeReady)
       socket.emit(WS_EVENTS.SESSION_LEAVE, {
         type: WS_EVENTS.SESSION_LEAVE,
         timestamp: new Date().toISOString(),
@@ -147,6 +155,9 @@ export function ChatView({
     }
     setMessages(prev => [...prev, userMessage])
 
+    // Set responding state immediately
+    setIsClaudeResponding(true)
+
     try {
       if (isNewChat) {
         // Create new session with selected directory
@@ -172,6 +183,8 @@ export function ChatView({
       }
     } catch (error) {
       console.error('Failed to send message:', error)
+      // Reset responding state on error
+      setIsClaudeResponding(false)
     }
   }
 
@@ -182,9 +195,9 @@ export function ChatView({
   const isSending =
     createSession.isPending || startSession.isPending || sendQuery.isPending
 
-  // Disable input if session is INITIALIZING
+  // Disable input if session is INITIALIZING or Claude is responding
   const isSessionInitializing = session?.status === SessionStatus.INITIALIZING
-  const isInputDisabled = isSessionInitializing
+  const isInputDisabled = isSessionInitializing || isClaudeResponding
 
   // Loading state (only for existing sessions)
   if (!isNewChat && isLoadingSession) {
@@ -223,14 +236,21 @@ export function ChatView({
       </div>
 
       {/* Message display */}
-      <MessageList messages={messages} />
+      <MessageList
+        messages={messages}
+        isClaudeResponding={isClaudeResponding}
+      />
 
       {/* Input at bottom */}
       <div className="p-4 border-t border-gray-700">
         <div className="max-w-4xl mx-auto">
           <ChatInput
             placeholder={
-              isInputDisabled ? 'Initializing session...' : 'Send a message...'
+              isClaudeResponding
+                ? 'Claude is responding...'
+                : isInputDisabled
+                  ? 'Initializing session...'
+                  : 'Send a message...'
             }
             disabled={isInputDisabled}
             isLoading={isSending}

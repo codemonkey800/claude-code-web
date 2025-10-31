@@ -2,9 +2,11 @@ import { type ClaudeMessage } from '@claude-code-web/shared'
 import React, { useEffect, useRef } from 'react'
 
 import { Message } from './Message'
+import { TypingIndicator } from './TypingIndicator'
 
 interface MessageListProps {
   messages: ClaudeMessage[]
+  isClaudeResponding: boolean
 }
 
 /**
@@ -51,7 +53,10 @@ function shouldFilterMessage(
   return assistantText === nextMessage.result
 }
 
-export function MessageList({ messages }: MessageListProps): React.JSX.Element {
+export function MessageList({
+  messages,
+  isClaudeResponding,
+}: MessageListProps): React.JSX.Element {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   // Filter out duplicate assistant messages that match the following result message
@@ -60,10 +65,10 @@ export function MessageList({ messages }: MessageListProps): React.JSX.Element {
     return !shouldFilterMessage(message, nextMessage)
   })
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive or typing state changes
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, isClaudeResponding])
 
   if (filteredMessages.length === 0) {
     return (
@@ -88,6 +93,11 @@ export function MessageList({ messages }: MessageListProps): React.JSX.Element {
           </div>
         )
       })}
+      {isClaudeResponding && (
+        <div className="flex justify-start">
+          <TypingIndicator />
+        </div>
+      )}
       <div ref={bottomRef} />
     </div>
   )
